@@ -1,0 +1,58 @@
+--- src/App.tsx
++++ src/App.tsx
+@@ -942,7 +942,10 @@
+                                 </div>
+                             ))}
+                             {formData.services.length === 0 && (
+-                                <div className="text-center py-6 text-sm text-gray-500 italic">No hay servicios asignados.</div>
++                                <div className="py-2">
++                                    <EmptySearchIllustration title="Sin servicios" description="No hay servicios asignados aún." />
++                                </div>
+                             )}
+                         </div>
+                     </div>
+@@ -1629,10 +1632,7 @@
+                         <h3 className="font-semibold text-lg text-gray-800">Distribución de Servicios</h3>
+                     </div>
+                     {pieChartData.length === 0 ? (
+-                        <div className="flex flex-col items-center justify-center h-52 text-gray-400 text-sm">
+-                            <Package size={36} strokeWidth={1.5} className="mb-2 text-gray-300" />
+-                            No hay servicios contratados aún
+-                        </div>
++                        <EmptySearchIllustration title="Sin datos" description="No hay servicios contratados aún" />
+                     ) : (
+                         <div className="h-52 mt-4 flex items-center justify-center">
+                             <ResponsiveContainer width="100%" height="100%">
+@@ -1710,10 +1710,7 @@
+                         <Button variant="outline" onClick={() => navigateTo('clients')} className="text-xs py-1 px-3">Ver todos</Button>
+                     </div>
+                     {clients.length === 0 ? (
+-                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 text-sm">
+-                            <Users size={36} strokeWidth={1.5} className="mb-2 text-gray-300" />
+-                            No hay clientes registrados aún
+-                        </div>
++                        <EmptySearchIllustration title="Sin clientes" description="No hay clientes registrados aún" />
+                     ) : (
+                         <div className="overflow-x-auto mt-4 rounded-xl border border-gray-100">
+                             <table className="w-full text-sm text-left">
+@@ -2110,7 +2107,9 @@
+                                         </div>
+                                     })
+                                 ) : (
+-                                    <div className="text-sm text-gray-500 italic py-2">No hay servicios asignados.</div>
++                                    <div className="py-2 border border-gray-100 rounded-2xl bg-white mt-4">
++                                        <EmptySearchIllustration title="Sin servicios" description="Este cliente no tiene servicios asignados." />
++                                    </div>
+                                 )}
+                                 <div>
+@@ -2215,9 +2214,7 @@
+                                         </Card>
+                                     ))}
+                                     {clientTasks.filter((t: any) => t.status !== 'Finalizada').length === 0 && (
+-                                        <div className="text-center py-6 text-gray-400 bg-gray-50 rounded-xl border border-gray-100 text-sm animate-stagger" style={{ animationDelay: '400ms' }}>
+-                                            No hay tareas pendientes.
+-                                        </div>
++                                        <EmptySearchIllustration title="Sin tareas pendientes" description="No hay tareas pendientes." />
+                                     )}
+                                 </div>
+                             </div>

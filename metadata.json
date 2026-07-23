@@ -1,0 +1,8 @@
+{
+  "name": "SISTEM Mauricio 2.6 OFICIAL",
+  "description": "",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
