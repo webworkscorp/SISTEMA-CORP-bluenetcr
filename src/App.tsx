@@ -6360,8 +6360,11 @@ const AppLayout = () => {
     };
 
     // Auto-start tutorial if the user has not completed it yet
-    const needsOnboarding = !introLoading && !loading && user && !isInviteFlow && !isRecoveryFlow && profile?.ha_visto_tutorial === false;
-    const isRobotVisible = needsOnboarding && (onboardingPhase === 'robot' || onboardingPhase === 'completed');
+    const isBaseOnboardingReady = !introLoading && !loading && user && !isInviteFlow && !isRecoveryFlow;
+    const isRobotVisible = isBaseOnboardingReady && (
+        (profile?.ha_visto_tutorial === false && onboardingPhase === 'robot') || 
+        onboardingPhase === 'completed'
+    );
     const robotMode = onboardingPhase === 'completed' ? 'completed' : 'welcome';
 
     return (
