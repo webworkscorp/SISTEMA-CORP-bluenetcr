@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.perfiles (
     nombre TEXT NOT NULL,
     email TEXT,
     foto_perfil_url TEXT,
+    telefono TEXT,
     rol TEXT NOT NULL DEFAULT 'usuario' CHECK (rol IN ('admin', 'usuario')),
     estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('pendiente', 'activo')),
     ha_visto_tutorial BOOLEAN DEFAULT false,
@@ -37,6 +38,25 @@ CREATE TABLE IF NOT EXISTS public.clientes (
     empresa TEXT,
     correo TEXT NOT NULL,
     telefono TEXT,
+    tipo_cliente TEXT DEFAULT 'Persona Física',
+    cedula_numero TEXT,
+    nacionalidad TEXT,
+    estado_civil TEXT,
+    profesion_oficio TEXT,
+    domicilio TEXT,
+    personeria_juridica TEXT,
+    personeria_url TEXT,
+    representante_legal TEXT,
+    composicion_societaria TEXT,
+    actividad_economica TEXT,
+    debida_diligencia_completada BOOLEAN DEFAULT false,
+    debida_diligencia_notas TEXT,
+    debida_diligencia_url TEXT,
+    calidad_actua TEXT,
+    datos_bancarios TEXT,
+    domicilio_contractual TEXT,
+    activos_administrados TEXT,
+    cedula_url TEXT,
     fecha_creacion TIMESTAMPTZ DEFAULT now()
 );
 
@@ -147,26 +167,26 @@ CREATE POLICY "Usuarios autenticados leen clientes" ON public.clientes
 CREATE POLICY "Usuarios autenticados actualizan clientes" ON public.clientes
     FOR UPDATE TO authenticated USING (true);
 
-CREATE POLICY "Admins insertan clientes" ON public.clientes
-    FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "Admins insertan clientes" ON public.clientes;
+DROP POLICY IF EXISTS "Usuarios autenticados insertan clientes" ON public.clientes;
+
+CREATE POLICY "Usuarios autenticados insertan clientes" ON public.clientes
+    FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE POLICY "Admins eliminan clientes" ON public.clientes
     FOR DELETE TO authenticated USING (public.is_admin());
 
 -- POLÍTICAS: CLIENTE_SERVICIOS
 DROP POLICY IF EXISTS "Usuarios autenticados gestionan cliente_servicios" ON public.cliente_servicios;
+DROP POLICY IF EXISTS "Usuarios autenticados leen cliente_servicios" ON public.cliente_servicios;
+DROP POLICY IF EXISTS "Usuarios autenticados actualizan cliente_servicios" ON public.cliente_servicios;
+DROP POLICY IF EXISTS "Admins insertan cliente_servicios" ON public.cliente_servicios;
+DROP POLICY IF EXISTS "Admins eliminan cliente_servicios" ON public.cliente_servicios;
+DROP POLICY IF EXISTS "Usuarios autenticados insertan cliente_servicios" ON public.cliente_servicios;
+DROP POLICY IF EXISTS "Usuarios autenticados eliminan cliente_servicios" ON public.cliente_servicios;
 
-CREATE POLICY "Usuarios autenticados leen cliente_servicios" ON public.cliente_servicios
-    FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Usuarios autenticados actualizan cliente_servicios" ON public.cliente_servicios
-    FOR UPDATE TO authenticated USING (true);
-
-CREATE POLICY "Admins insertan cliente_servicios" ON public.cliente_servicios
-    FOR INSERT TO authenticated WITH CHECK (public.is_admin());
-
-CREATE POLICY "Admins eliminan cliente_servicios" ON public.cliente_servicios
-    FOR DELETE TO authenticated USING (public.is_admin());
+CREATE POLICY "Usuarios autenticados gestionan cliente_servicios" ON public.cliente_servicios
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- POLÍTICAS: DOCUMENTOS
 DROP POLICY IF EXISTS "Usuarios autenticados gestionan documentos" ON public.documentos;

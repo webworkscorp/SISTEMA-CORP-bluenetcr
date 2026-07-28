@@ -12,7 +12,7 @@ import {
     ChevronRight, ChevronLeft, ArrowLeft, CheckCircle, CheckCircle2, AlertTriangle, Save, Clock, File, Lock, Copy, ExternalLink,
     Upload, Trash2, Edit2, User, Building, Phone, Mail, MapPin, Briefcase,
     CheckSquare, X, FileImage, FileSpreadsheet, FileVideo, FileAudio, FileArchive, FileCode, FileType2,
-    HelpCircle, Wifi, Camera, Info, Calendar, Crown, Sparkles, ShieldCheck
+    HelpCircle, Wifi, Camera, Info, Calendar, Crown, Sparkles, ShieldCheck, Building2, AlertCircle
 } from 'lucide-react';
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
@@ -25,6 +25,8 @@ import 'shepherd.js/dist/css/shepherd.css';
 import { offset, shift, flip } from '@floating-ui/dom';
 import { OnboardingRobot } from './components/OnboardingRobot';
 import { CommissionsView as CommissionsViewComponent } from './components/CommissionsView';
+import { CountrySelect } from './components/CountrySelect';
+import { formatCountryWithFlag } from './data/paises';
 
 // --- ILUSTRACIONES DE ESTADO VACÍO PERSONALIZADAS POR SECCIÓN ---
 
@@ -56,6 +58,24 @@ const EmptyChartIllustration = ({
         <p className="text-xs text-slate-500 max-w-[280px] leading-relaxed">{description}</p>
     </div>
 );
+
+export const getNextClientNumber = (existingClients: any[]): string => {
+    const usedNumbers = new Set<number>();
+    (existingClients || []).forEach((c: any) => {
+        const raw = (c.number || c.numero_cliente || '').toString().replace('#', '').trim();
+        const num = parseInt(raw, 10);
+        if (!isNaN(num) && num > 0) {
+            usedNumbers.add(num);
+        }
+    });
+
+    let candidate = 1;
+    while (usedNumbers.has(candidate)) {
+        candidate++;
+    }
+
+    return String(candidate).padStart(3, '0');
+};
 
 // 2. Gráfica de Pie / Distribución de Servicios
 const EmptyPieIllustration = ({ 
@@ -751,13 +771,28 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     id: c.id,
                     number: c.numero_cliente?.replace('#', '') || '000',
                     name: c.nombre,
-                    company: c.empresa || '',
+                    company: c.empresa || (c.tipo_cliente === 'Persona Jurídica' ? c.nombre : ''),
                     email: c.correo,
                     phone: c.telefono || '',
+                    tipoCliente: c.tipo_cliente || 'Persona Física',
+                    cedulaNumero: c.cedula_numero || '',
+                    cedula_url: c.cedula_url || null,
                     nacionalidad: c.nacionalidad || '',
                     estadoCivil: c.estado_civil || '',
-                    cedula_url: c.cedula_url || null,
-                    pasaporte_url: c.pasaporte_url || null,
+                    profesionOficio: c.profesion_oficio || '',
+                    domicilio: c.domicilio || '',
+                    personeriaJuridica: c.personeria_juridica || '',
+                    personeria_url: c.personeria_url || null,
+                    representanteLegal: c.representante_legal || '',
+                    composicionSocietaria: c.composicion_societaria || '',
+                    actividadEconomica: c.actividad_economica || '',
+                    debidaDiligenciaCompletada: !!c.debida_diligencia_completada,
+                    debidaDiligenciaNotas: c.debida_diligencia_notas || '',
+                    debida_diligencia_url: c.debida_diligencia_url || null,
+                    calidadActua: c.calidad_actua || '',
+                    datosBancarios: c.datos_bancarios || '',
+                    domicilioContractual: c.domicilio_contractual || '',
+                    activosAdministrados: c.activos_administrados || '',
                     status: 'Activo',
                     dateAdded: c.fecha_creacion?.split('T')[0] || '',
                     services: c.cliente_servicios ? c.cliente_servicios.map((cs: any) => ({
@@ -931,7 +966,125 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user]);
 
-    // Custom State Setters that sync immediately with Supabase
+    const safeInsertClient = async (item: any, companyVal: string) => {
+        const assignedNumber = item.number || getNextClientNumber(clients);
+        const fullPayload: any = {
+            numero_cliente: '#' + assignedNumber.replace('#', ''),
+            nombre: item.name || 'Sin Nombre',
+            empresa: companyVal,
+            correo: item.email?.trim() || `${(item.name || 'cliente').toLowerCase().replace(/[^a-z0-9]/g, '') || 'cliente'}@sin-correo.com`,
+            telefono: item.phone || null,
+            tipo_cliente: item.tipoCliente || 'Persona Física',
+            cedula_numero: item.cedulaNumero || null,
+            nacionalidad: item.nacionalidad || null,
+            estado_civil: item.estadoCivil || null,
+            profesion_oficio: item.profesionOficio || null,
+            domicilio: item.domicilio || null,
+            personeria_juridica: item.personeriaJuridica || null,
+            representante_legal: item.representanteLegal || null,
+            composicion_societaria: item.composicionSocietaria || null,
+            actividad_economica: item.actividadEconomica || null,
+            debida_diligencia_completada: !!item.debidaDiligenciaCompletada,
+            debida_diligencia_notas: item.debidaDiligenciaNotas || null,
+            calidad_actua: item.calidadActua || null,
+            datos_bancarios: item.datosBancarios || null,
+            domicilio_contractual: item.domicilioContractual || null,
+            activos_administrados: item.activosAdministrados || null
+        };
+
+        let res = await supabase.from('clientes').insert(fullPayload).select().single();
+        if (!res.error && res.data) return res;
+
+        console.warn('Full client insert failed, attempting fallback payload:', res.error);
+
+        const basicPayload: any = {
+            numero_cliente: fullPayload.numero_cliente,
+            nombre: fullPayload.nombre,
+            empresa: fullPayload.empresa,
+            correo: fullPayload.correo,
+            telefono: fullPayload.telefono,
+            tipo_cliente: fullPayload.tipo_cliente,
+            cedula_numero: fullPayload.cedula_numero,
+            nacionalidad: fullPayload.nacionalidad,
+            estado_civil: fullPayload.estado_civil
+        };
+
+        let resBasic = await supabase.from('clientes').insert(basicPayload).select().single();
+        if (!resBasic.error && resBasic.data) return resBasic;
+
+        console.warn('Basic client insert failed, attempting minimal payload:', resBasic.error);
+
+        const minimalPayload: any = {
+            numero_cliente: fullPayload.numero_cliente,
+            nombre: fullPayload.nombre,
+            empresa: fullPayload.empresa,
+            correo: fullPayload.correo,
+            telefono: fullPayload.telefono
+        };
+
+        let resMinimal = await supabase.from('clientes').insert(minimalPayload).select().single();
+        if (!resMinimal.error && resMinimal.data) return resMinimal;
+
+        return res;
+    };
+
+    const safeUpdateClient = async (clientId: string, item: any, companyVal: string, updateUrls: any = {}) => {
+        const fullPayload: any = {
+            nombre: item.name || 'Sin Nombre',
+            empresa: companyVal,
+            correo: item.email?.trim() || `${(item.name || 'cliente').toLowerCase().replace(/[^a-z0-9]/g, '') || 'cliente'}@sin-correo.com`,
+            telefono: item.phone || null,
+            tipo_cliente: item.tipoCliente || 'Persona Física',
+            cedula_numero: item.cedulaNumero || null,
+            nacionalidad: item.nacionalidad || null,
+            estado_civil: item.estadoCivil || null,
+            profesion_oficio: item.profesionOficio || null,
+            domicilio: item.domicilio || null,
+            personeria_juridica: item.personeriaJuridica || null,
+            representante_legal: item.representanteLegal || null,
+            composicion_societaria: item.composicionSocietaria || null,
+            actividad_economica: item.actividadEconomica || null,
+            debida_diligencia_completada: !!item.debidaDiligenciaCompletada,
+            debida_diligencia_notas: item.debidaDiligenciaNotas || null,
+            calidad_actua: item.calidadActua || null,
+            datos_bancarios: item.datosBancarios || null,
+            domicilio_contractual: item.domicilioContractual || null,
+            activos_administrados: item.activosAdministrados || null,
+            cedula_url: updateUrls.cedula_url !== undefined ? updateUrls.cedula_url : (item.cedula_url || null),
+            personeria_url: updateUrls.personeria_url !== undefined ? updateUrls.personeria_url : (item.personeria_url || null),
+            debida_diligencia_url: updateUrls.debida_diligencia_url !== undefined ? updateUrls.debida_diligencia_url : (item.debida_diligencia_url || null)
+        };
+
+        let res = await supabase.from('clientes').update(fullPayload).eq('id', clientId);
+        if (!res.error) return res;
+
+        console.warn('Full client update failed, attempting fallback update:', res.error);
+
+        const basicPayload: any = {
+            nombre: fullPayload.nombre,
+            empresa: fullPayload.empresa,
+            correo: fullPayload.correo,
+            telefono: fullPayload.telefono,
+            tipo_cliente: fullPayload.tipo_cliente,
+            cedula_numero: fullPayload.cedula_numero,
+            cedula_url: fullPayload.cedula_url,
+            personeria_url: fullPayload.personeria_url,
+            debida_diligencia_url: fullPayload.debida_diligencia_url
+        };
+
+        let resBasic = await supabase.from('clientes').update(basicPayload).eq('id', clientId);
+        if (!resBasic.error) return resBasic;
+
+        const minimalPayload: any = {
+            nombre: fullPayload.nombre,
+            empresa: fullPayload.empresa,
+            correo: fullPayload.correo,
+            telefono: fullPayload.telefono
+        };
+
+        return await supabase.from('clientes').update(minimalPayload).eq('id', clientId);
+    };
+
     const customSetClients = async (value: any) => {
         let newClients = typeof value === 'function' ? value(clients) : value;
         setClients(newClients);
@@ -942,37 +1095,54 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 // Added client
                 const added = newClients.filter((c: any) => !clients.some((existing: any) => existing.id === c.id));
                 for (const item of added) {
-                    const { data: createdClient, error } = await supabase.from('clientes').insert({
-                        nombre: item.name,
-                        empresa: item.company || null,
-                        correo: item.email,
-                        telefono: item.phone || null,
-                        nacionalidad: item.nacionalidad || null,
-                        estado_civil: item.estadoCivil || null
-                    }).select().single();
+                    const companyVal = item.tipoCliente === 'Persona Jurídica' ? item.name : (item.company || null);
+                    const { data: createdClient, error } = await safeInsertClient(item, companyVal);
 
                     if (createdClient) {
                         let cedulaUrl = null;
-                        let pasaporteUrl = null;
+                        let personeriaUrl = null;
+                        let debidaDiligenciaUrl = null;
 
                         if (item.cedulaFile) {
                             const ext = item.cedulaFile.name.split('.').pop() || 'pdf';
                             const filePath = `${createdClient.id}/${Date.now()}_cedula.${ext}`;
-                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.cedulaFile);
-                            if (!uploadError) cedulaUrl = filePath;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.cedulaFile, { upsert: true });
+                            if (!uploadError) {
+                                cedulaUrl = filePath;
+                            } else {
+                                console.error('Upload error cedulaFile:', uploadError);
+                                showToast('Error de subida', 'No se pudo subir la cédula: ' + uploadError.message, 'error');
+                            }
                         }
-                        if (item.pasaporteFile) {
-                            const ext = item.pasaporteFile.name.split('.').pop() || 'pdf';
-                            const filePath = `${createdClient.id}/${Date.now()}_pasaporte.${ext}`;
-                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.pasaporteFile);
-                            if (!uploadError) pasaporteUrl = filePath;
+                        if (item.personeriaFile) {
+                            const ext = item.personeriaFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${createdClient.id}/${Date.now()}_personeria.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.personeriaFile, { upsert: true });
+                            if (!uploadError) {
+                                personeriaUrl = filePath;
+                            } else {
+                                console.error('Upload error personeriaFile:', uploadError);
+                                showToast('Error de subida', 'No se pudo subir la personería: ' + uploadError.message, 'error');
+                            }
+                        }
+                        if (item.debidaDiligenciaFile) {
+                            const ext = item.debidaDiligenciaFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${createdClient.id}/${Date.now()}_debida_diligencia.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.debidaDiligenciaFile, { upsert: true });
+                            if (!uploadError) {
+                                debidaDiligenciaUrl = filePath;
+                            } else {
+                                console.error('Upload error debidaDiligenciaFile:', uploadError);
+                                showToast('Error de subida', 'No se pudo subir el respaldo AML: ' + uploadError.message, 'error');
+                            }
                         }
 
-                        if (cedulaUrl || pasaporteUrl) {
-                            const updateData: any = {};
-                            if (cedulaUrl) updateData.cedula_url = cedulaUrl;
-                            if (pasaporteUrl) updateData.pasaporte_url = pasaporteUrl;
-                            await supabase.from('clientes').update(updateData).eq('id', createdClient.id);
+                        if (cedulaUrl || personeriaUrl || debidaDiligenciaUrl) {
+                            const updateUrls: any = {};
+                            if (cedulaUrl) updateUrls.cedula_url = cedulaUrl;
+                            if (personeriaUrl) updateUrls.personeria_url = personeriaUrl;
+                            if (debidaDiligenciaUrl) updateUrls.debida_diligencia_url = debidaDiligenciaUrl;
+                            await safeUpdateClient(createdClient.id, item, companyVal, updateUrls);
                         }
 
                         // Insert assigned services
@@ -991,20 +1161,27 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             ...c,
                             id: createdClient.id,
                             number: createdClient.numero_cliente?.replace('#', '') || c.number,
+                            company: companyVal || c.company,
                             dateAdded: createdClient.fecha_creacion?.split('T')[0] || c.dateAdded,
                             cedula_url: cedulaUrl,
-                            pasaporte_url: pasaporteUrl
+                            personeria_url: personeriaUrl,
+                            debida_diligencia_url: debidaDiligenciaUrl,
+                            cedulaFile: null,
+                            personeriaFile: null,
+                            debidaDiligenciaFile: null
                         } : c);
+
+                        showToast('Cliente creado', 'El nuevo cliente fue registrado exitosamente.', 'success');
+                    } else if (error) {
+                        console.error('Error inserting client:', error);
+                        showToast('Error', 'No se pudo guardar el cliente en la base de datos: ' + error.message, 'error');
                     }
                 }
-                        } else if (newClients.length < clients.length) {
+            } else if (newClients.length < clients.length) {
                 // Deleted client
-                console.log('DELETING CLIENTS. old:', clients.length, 'new:', newClients.length);
                 const deleted = clients.filter((c: any) => !newClients.some((item: any) => item.id === c.id));
-                console.log('Deleted items:', deleted);
                 for (const item of deleted) {
                     try {
-                        // Delete relations first in case there is no ON DELETE CASCADE
                         await supabase.from('cliente_servicios').delete().eq('cliente_id', item.id);
                         await supabase.from('tareas').delete().eq('cliente_id', item.id);
                         await supabase.from('documentos').delete().eq('cliente_id', item.id);
@@ -1012,7 +1189,9 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         const { error } = await supabase.from('clientes').delete().eq('id', item.id);
                         if (error) {
                             console.error('Error deleting client from Supabase:', error);
-                            alert('No se pudo eliminar el cliente en la base de datos: ' + error.message);
+                            showToast('Error', 'No se pudo eliminar el cliente en la base de datos: ' + error.message, 'error');
+                        } else {
+                            showToast('Cliente eliminado', 'El cliente y sus registros asociados fueron eliminados.', 'success');
                         }
                     } catch (e) {
                         console.error('Exception deleting client:', e);
@@ -1022,66 +1201,76 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 // Updated client
                 for (const item of newClients) {
                     const existing = clients.find((c: any) => c.id === item.id);
-                    if (existing && (
-                        existing.name !== item.name || 
-                        existing.company !== item.company || 
-                        existing.email !== item.email || 
-                        existing.phone !== item.phone || 
-                        existing.nacionalidad !== item.nacionalidad || 
-                        existing.estadoCivil !== item.estadoCivil || 
-                        existing.cedula_url !== item.cedula_url ||
-                        existing.pasaporte_url !== item.pasaporte_url ||
-                        item.cedulaFile || 
-                        item.pasaporteFile || 
-                        JSON.stringify(existing.services) !== JSON.stringify(item.services)
-                    )) {
-                        const updateData: any = {
-                            nombre: item.name,
-                            empresa: item.company || null,
-                            correo: item.email,
-                            telefono: item.phone || null,
-                            nacionalidad: item.nacionalidad || null,
-                            estado_civil: item.estadoCivil || null,
-                            cedula_url: item.cedula_url || null,
-                            pasaporte_url: item.pasaporte_url || null
-                        };
+                    if (existing) {
+                        const companyVal = item.tipoCliente === 'Persona Jurídica' ? item.name : (item.company || null);
+                        
+                        let newCedulaUrl = item.cedula_url || null;
+                        let newPersoneriaUrl = item.personeria_url || null;
+                        let newDebidaDiligenciaUrl = item.debida_diligencia_url || null;
 
                         if (existing.cedula_url && !item.cedula_url) {
-                            try {
-                                await supabase.storage.from('documents').remove([existing.cedula_url]);
-                            } catch (e) {
-                                console.error('Error deleting cedula from storage:', e);
-                            }
+                            try { await supabase.storage.from('documents').remove([existing.cedula_url]); } catch (e) {}
                         }
-
-                        if (existing.pasaporte_url && !item.pasaporte_url) {
-                            try {
-                                await supabase.storage.from('documents').remove([existing.pasaporte_url]);
-                            } catch (e) {
-                                console.error('Error deleting pasaporte from storage:', e);
-                            }
+                        if (existing.personeria_url && !item.personeria_url) {
+                            try { await supabase.storage.from('documents').remove([existing.personeria_url]); } catch (e) {}
+                        }
+                        if (existing.debida_diligencia_url && !item.debida_diligencia_url) {
+                            try { await supabase.storage.from('documents').remove([existing.debida_diligencia_url]); } catch (e) {}
                         }
 
                         if (item.cedulaFile) {
                             const ext = item.cedulaFile.name.split('.').pop() || 'pdf';
                             const filePath = `${item.id}/${Date.now()}_cedula.${ext}`;
-                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.cedulaFile);
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.cedulaFile, { upsert: true });
                             if (!uploadError) {
-                                updateData.cedula_url = filePath;
+                                newCedulaUrl = filePath;
                                 item.cedula_url = filePath;
+                                item.cedulaFile = null;
+                            } else {
+                                console.error('Error uploading cedulaFile:', uploadError);
+                                showToast('Error de subida', 'No se pudo subir la cédula: ' + uploadError.message, 'error');
                             }
                         }
-                        if (item.pasaporteFile) {
-                            const ext = item.pasaporteFile.name.split('.').pop() || 'pdf';
-                            const filePath = `${item.id}/${Date.now()}_pasaporte.${ext}`;
-                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.pasaporteFile);
+                        if (item.personeriaFile) {
+                            const ext = item.personeriaFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${item.id}/${Date.now()}_personeria.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.personeriaFile, { upsert: true });
                             if (!uploadError) {
-                                updateData.pasaporte_url = filePath;
-                                item.pasaporte_url = filePath;
+                                newPersoneriaUrl = filePath;
+                                item.personeria_url = filePath;
+                                item.personeriaFile = null;
+                            } else {
+                                console.error('Error uploading personeriaFile:', uploadError);
+                                showToast('Error de subida', 'No se pudo subir la personería: ' + uploadError.message, 'error');
+                            }
+                        }
+                        if (item.debidaDiligenciaFile) {
+                            const ext = item.debidaDiligenciaFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${item.id}/${Date.now()}_debida_diligencia.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.debidaDiligenciaFile, { upsert: true });
+                            if (!uploadError) {
+                                newDebidaDiligenciaUrl = filePath;
+                                item.debida_diligencia_url = filePath;
+                                item.debidaDiligenciaFile = null;
+                            } else {
+                                console.error('Error uploading debidaDiligenciaFile:', uploadError);
+                                showToast('Error de subida', 'No se pudo subir el respaldo AML: ' + uploadError.message, 'error');
                             }
                         }
 
-                        await supabase.from('clientes').update(updateData).eq('id', item.id);
+                        const updateUrls = {
+                            cedula_url: newCedulaUrl,
+                            personeria_url: newPersoneriaUrl,
+                            debida_diligencia_url: newDebidaDiligenciaUrl
+                        };
+
+                        const { error: updateError } = await safeUpdateClient(item.id, item, companyVal, updateUrls);
+                        if (updateError) {
+                            console.error('Error updating client in Supabase:', updateError);
+                            showToast('Error al actualizar', 'No se pudieron guardar los datos del cliente: ' + updateError.message, 'error');
+                        } else {
+                            showToast('Cliente guardado', 'Los datos y documentos fueron guardados correctamente.', 'success');
+                        }
 
                         // Sync services: delete existing and re-insert
                         await supabase.from('cliente_servicios').delete().eq('cliente_id', item.id);
@@ -1103,7 +1292,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
             console.error('Error syncing clients with Supabase:', err);
         }
 
-        setClients(newClients);
+        setClients([...newClients]);
     };
 
     const customSetProducts = async (value: any) => {
@@ -1725,12 +1914,28 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
         idNumber: '',
         email: '',
         phone: '',
+        tipoCliente: 'Persona Física',
+        cedulaNumero: '',
         nacionalidad: '',
         estadoCivil: '',
+        profesionOficio: '',
+        domicilio: '',
+        personeriaJuridica: '',
+        representanteLegal: '',
+        composicionSocietaria: '',
+        actividadEconomica: '',
+        debidaDiligenciaCompletada: false,
+        debidaDiligenciaNotas: '',
+        calidadActua: '',
+        datosBancarios: '',
+        domicilioContractual: '',
+        activosAdministrados: '',
         cedulaFile: null as File | null,
-        pasaporteFile: null as File | null,
+        personeriaFile: null as File | null,
+        debidaDiligenciaFile: null as File | null,
         cedula_url: '',
-        pasaporte_url: '',
+        personeria_url: '',
+        debida_diligencia_url: '',
         services: [] as any[],
         status: 'Activo'
     });
@@ -1739,34 +1944,63 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
         if (initialData) {
             setFormData({
                 ...initialData,
+                tipoCliente: initialData.tipoCliente || 'Persona Física',
+                cedulaNumero: initialData.cedulaNumero || '',
                 nacionalidad: initialData.nacionalidad || '',
                 estadoCivil: initialData.estadoCivil || '',
+                profesionOficio: initialData.profesionOficio || '',
+                domicilio: initialData.domicilio || '',
+                personeriaJuridica: initialData.personeriaJuridica || '',
+                representanteLegal: initialData.representanteLegal || '',
+                composicionSocietaria: initialData.composicionSocietaria || '',
+                actividadEconomica: initialData.actividadEconomica || '',
+                debidaDiligenciaCompletada: !!initialData.debidaDiligenciaCompletada,
+                debidaDiligenciaNotas: initialData.debidaDiligenciaNotas || '',
+                calidadActua: initialData.calidadActua || '',
+                datosBancarios: initialData.datosBancarios || '',
+                domicilioContractual: initialData.domicilioContractual || '',
+                activosAdministrados: initialData.activosAdministrados || '',
                 cedulaFile: null,
-                pasaporteFile: null,
+                personeriaFile: null,
+                debidaDiligenciaFile: null,
                 cedula_url: initialData.cedula_url || '',
-                pasaporte_url: initialData.pasaporte_url || '',
+                personeria_url: initialData.personeria_url || '',
+                debida_diligencia_url: initialData.debida_diligencia_url || '',
                 services: initialData.services || (initialData.productId ? [{ productId: initialData.productId, amount: initialData.amount }] : [])
             });
         } else {
-            if (isTourMode) {
-                setFormData({
-                    name: '',
-                    company: '',
-                    idNumber: '',
-                    email: 'practica@bluenet.com',
-                    phone: '+1 (555) 0199',
-                    nacionalidad: '',
-                    estadoCivil: '',
-                    cedulaFile: null,
-                    pasaporteFile: null,
-                    cedula_url: '',
-                    pasaporte_url: '',
-                    services: [],
-                    status: 'Activo'
-                });
-            } else {
-                setFormData({ name: '', company: '', idNumber: '', email: '', phone: '', nacionalidad: '', estadoCivil: '', cedulaFile: null, pasaporteFile: null, cedula_url: '', pasaporte_url: '', services: [], status: 'Activo' });
-            }
+            const defaults = {
+                name: '',
+                company: '',
+                idNumber: '',
+                email: isTourMode ? 'practica@bluenet.com' : '',
+                phone: isTourMode ? '+1 (555) 0199' : '',
+                tipoCliente: 'Persona Física',
+                cedulaNumero: '',
+                nacionalidad: '',
+                estadoCivil: '',
+                profesionOficio: '',
+                domicilio: '',
+                personeriaJuridica: '',
+                representanteLegal: '',
+                composicionSocietaria: '',
+                actividadEconomica: '',
+                debidaDiligenciaCompletada: false,
+                debidaDiligenciaNotas: '',
+                calidadActua: '',
+                datosBancarios: '',
+                domicilioContractual: '',
+                activosAdministrados: '',
+                cedulaFile: null,
+                personeriaFile: null,
+                debidaDiligenciaFile: null,
+                cedula_url: '',
+                personeria_url: '',
+                debida_diligencia_url: '',
+                services: [],
+                status: 'Activo'
+            };
+            setFormData(defaults);
         }
     }, [initialData, isOpen, isTourMode]);
 
@@ -1849,17 +2083,9 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
         setFormData({ ...formData, services: newServices });
     };
 
-    const handleCompanyFocus = () => {
-        // Auto-advance removed to favor manual "Siguiente" button validation
-    };
-
-    const handleAddServiceFocus = () => {
-        // Auto-advance removed to favor manual "Siguiente" button validation
-    };
-
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/15 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center p-6 border-b border-gray-100">
                     <h3 className="text-lg font-semibold text-gray-900">{initialData ? 'Editar Cliente' : 'Nuevo Cliente'}</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
@@ -1868,11 +2094,45 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
                     
+                    {/* Selector de Tipo de Cliente */}
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Tipo de Cliente</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setFormData({...formData, tipoCliente: 'Persona Física'})}
+                                className={`py-2.5 px-4 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 ${
+                                    formData.tipoCliente === 'Persona Física'
+                                        ? 'bg-[#488fcc] text-white border-[#488fcc] shadow-md shadow-blue-500/10'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                                }`}
+                            >
+                                <User size={16} /> Persona Física
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFormData({...formData, tipoCliente: 'Persona Jurídica'})}
+                                className={`py-2.5 px-4 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 ${
+                                    formData.tipoCliente === 'Persona Jurídica'
+                                        ? 'bg-[#488fcc] text-white border-[#488fcc] shadow-md shadow-blue-500/10'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                                }`}
+                            >
+                                <Building2 size={16} /> Persona Jurídica
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Información Básica e Identificación */}
                     <div>
-                        <h4 className="text-sm font-semibold text-gray-900 border-b pb-2 mb-4">Información Personal</h4>
+                        <h4 className="text-sm font-bold text-gray-900 border-b pb-2 mb-4 flex items-center gap-2">
+                            <User size={16} className="text-[#488fcc]" /> Informacion Principal ({formData.tipoCliente})
+                        </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {formData.tipoCliente === 'Persona Jurídica' ? 'Razón Social / Nombre Comercial' : 'Nombre Completo'}
+                                </label>
                                 <input id="tour-client-name" required type="text" value={formData.name} disabled={isTourMode && currentTourStepId !== 'clients-add-practice-name'} onChange={e => setFormData({...formData, name: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && currentTourStepId !== 'clients-add-practice-name' ? 'bg-gray-50' : ''}`} />
                             </div>
                             <div>
@@ -1883,88 +2143,225 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Número Telefónico</label>
                                 <input id="tour-client-phone" type="text" disabled={isTourMode && !initialData} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                             </div>
+
+                            {/* Campos condicionales para Persona Física */}
+                            {formData.tipoCliente === 'Persona Física' ? (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cédula / ID</label>
+                                        <input type="text" placeholder="Ej: 1-1234-5678" value={formData.cedulaNumero} onChange={e => setFormData({...formData, cedulaNumero: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Cédula Adjunta (Foto / PDF)</label>
+                                        {formData.cedula_url && !formData.cedulaFile ? (
+                                            <div className="flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-100 mb-2">
+                                                <button type="button" className="text-xs text-blue-700 hover:underline flex items-center gap-1.5 font-medium" onClick={async () => {
+                                                    try {
+                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(formData.cedula_url, 60);
+                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                                    } catch(e) {}
+                                                }}>
+                                                    <FileText size={14} /> Ver Cédula Actual
+                                                </button>
+                                                <button type="button" onClick={() => setFormData({...formData, cedula_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar cédula actual">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        ) : formData.cedulaFile ? (
+                                            <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
+                                                <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
+                                                    <FileText size={14} /> {formData.cedulaFile.name}
+                                                </span>
+                                                <button type="button" onClick={() => setFormData({...formData, cedulaFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                        <input key={formData.cedulaFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
+                                            if (e.target.files?.[0]) setFormData({...formData, cedulaFile: e.target.files[0]});
+                                        }} className="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nacionalidad</label>
+                                        <CountrySelect value={formData.nacionalidad} onChange={val => setFormData({...formData, nacionalidad: val})} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Estado Civil</label>
+                                        <select value={formData.estadoCivil} onChange={e => setFormData({...formData, estadoCivil: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent bg-white text-sm">
+                                            <option value="">Seleccione...</option>
+                                            <option value="soltero/a">Soltero/a</option>
+                                            <option value="casado/a">Casado/a</option>
+                                            <option value="divorciado/a">Divorciado/a</option>
+                                            <option value="viudo/a">Viudo/a</option>
+                                            <option value="unión libre">Unión Libre</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Profesión u Oficio</label>
+                                        <input type="text" placeholder="Ej: Abogado, Ingeniero..." value={formData.profesionOficio} onChange={e => setFormData({...formData, profesionOficio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Domicilio</label>
+                                        <input type="text" placeholder="Dirección física completa" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                </>
+                            ) : (
+                                /* Campos condicionales para Persona Jurídica */
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Personería Jurídica (Cédula Jurídica / Número)</label>
+                                        <input type="text" placeholder="Ej: 3-101-123456" value={formData.personeriaJuridica} onChange={e => setFormData({...formData, personeriaJuridica: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Documento de Personería (Archivo)</label>
+                                        {formData.personeria_url && !formData.personeriaFile ? (
+                                            <div className="flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-100 mb-2">
+                                                <button type="button" className="text-xs text-blue-700 hover:underline flex items-center gap-1.5 font-medium" onClick={async () => {
+                                                    try {
+                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(formData.personeria_url, 60);
+                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                                    } catch(e) {}
+                                                }}>
+                                                    <FileText size={14} /> Ver Personería Actual
+                                                </button>
+                                                <button type="button" onClick={() => setFormData({...formData, personeria_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar personería actual">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        ) : formData.personeriaFile ? (
+                                            <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
+                                                <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
+                                                    <FileText size={14} /> {formData.personeriaFile.name}
+                                                </span>
+                                                <button type="button" onClick={() => setFormData({...formData, personeriaFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                        <input key={formData.personeriaFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
+                                            if (e.target.files?.[0]) setFormData({...formData, personeriaFile: e.target.files[0]});
+                                        }} className="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Representante Legal</label>
+                                        <input type="text" placeholder="Nombre completo del apoderado" value={formData.representanteLegal} onChange={e => setFormData({...formData, representanteLegal: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Actividad Económica</label>
+                                        <input type="text" placeholder="Ej: Comercio, Servicios..." value={formData.actividadEconomica} onChange={e => setFormData({...formData, actividadEconomica: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Domicilio de la Sociedad</label>
+                                        <input type="text" placeholder="Dirección física de la empresa" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Composición Societaria / Beneficiarios Finales</label>
+                                        <textarea rows={2} placeholder="Accionistas principales, porcentajes o beneficiarios finales..." value={formData.composicionSocietaria} onChange={e => setFormData({...formData, composicionSocietaria: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Debida Diligencia AML/CFT/CFP */}
+                    <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 space-y-3">
+                        <h4 className="text-sm font-bold text-emerald-900 flex items-center gap-2">
+                            <ShieldCheck size={16} className="text-emerald-600" /> Debida Diligencia AML / CFT / CFP
+                        </h4>
+                        <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-emerald-200/60">
+                            <input
+                                id="debidaDiligenciaCheck"
+                                type="checkbox"
+                                checked={formData.debidaDiligenciaCompletada}
+                                onChange={e => setFormData({...formData, debidaDiligenciaCompletada: e.target.checked})}
+                                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
+                            />
+                            <label htmlFor="debidaDiligenciaCheck" className="text-sm font-semibold text-gray-800 cursor-pointer select-none">
+                                Debida Diligencia completada satisfactoriamente
+                            </label>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">Observaciones / Notas de Debida Diligencia</label>
+                            <textarea rows={2} placeholder="Notas del oficial de cumplimiento, hallazgos o resumen..." value={formData.debidaDiligenciaNotas} onChange={e => setFormData({...formData, debidaDiligenciaNotas: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">Documento de Respaldo AML (PDF / Imagen)</label>
+                            {formData.debida_diligencia_url && !formData.debidaDiligenciaFile ? (
+                                <div className="flex items-center justify-between bg-emerald-100/70 p-2 rounded-lg border border-emerald-200 mb-2">
+                                    <button type="button" className="text-xs text-emerald-800 hover:underline flex items-center gap-1.5 font-semibold" onClick={async () => {
+                                        try {
+                                            const { data } = await supabase.storage.from('documents').createSignedUrl(formData.debida_diligencia_url, 60);
+                                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                        } catch(e) {}
+                                    }}>
+                                        <FileText size={14} /> Ver Respaldo AML Actual
+                                    </button>
+                                    <button type="button" onClick={() => setFormData({...formData, debida_diligencia_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar documento de respaldo">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            ) : formData.debidaDiligenciaFile ? (
+                                <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
+                                    <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
+                                        <FileText size={14} /> {formData.debidaDiligenciaFile.name}
+                                    </span>
+                                    <button type="button" onClick={() => setFormData({...formData, debidaDiligenciaFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ) : null}
+                            <input key={formData.debidaDiligenciaFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
+                                if (e.target.files?.[0]) setFormData({...formData, debidaDiligenciaFile: e.target.files[0]});
+                            }} className="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200" />
+                        </div>
+                    </div>
+
+                    {/* Datos Contractuales */}
+                    <div>
+                        <h4 className="text-sm font-bold text-gray-900 border-b pb-2 mb-4 flex items-center gap-2">
+                            <FileText size={16} className="text-[#488fcc]" /> Datos Contractuales
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nacionalidad</label>
-                                <input id="tour-client-nationality" type="text" disabled={isTourMode && !initialData} value={formData.nacionalidad} onChange={e => setFormData({...formData, nacionalidad: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Estado Civil</label>
-                                <select id="tour-client-civil-status" disabled={isTourMode && !initialData} value={formData.estadoCivil} onChange={e => setFormData({...formData, estadoCivil: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent bg-white text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}>
-                                    <option value="">Seleccione...</option>
-                                    <option value="Soltero/a">Soltero/a</option>
-                                    <option value="Casado/a">Casado/a</option>
-                                    <option value="Divorciado/a">Divorciado/a</option>
-                                    <option value="Viudo/a">Viudo/a</option>
-                                    <option value="Unión Libre">Unión Libre</option>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Calidad en que actúa</label>
+                                <select value={formData.calidadActua} onChange={e => setFormData({...formData, calidadActua: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent bg-white text-sm">
+                                    <option value="">Seleccione rol contractual...</option>
+                                    <option value="Fideicomitente">Fideicomitente</option>
+                                    <option value="Fideicomisario">Fideicomisario</option>
+                                    <option value="Depositante">Depositante</option>
+                                    <option value="Depositario">Depositario</option>
+                                    <option value="Comprador">Comprador</option>
+                                    <option value="Vendedor">Vendedor</option>
+                                    <option value="Agente de Escrow">Agente de Escrow</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cédula de Identidad (Archivo)</label>
-                                {formData.cedula_url && !formData.cedulaFile ? (
-                                    <div className="flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-100 mb-2">
-                                        <button type="button" className="text-xs text-blue-700 hover:underline flex items-center gap-1.5 font-medium" onClick={async () => {
-                                            try {
-                                                const { data } = await supabase.storage.from('documents').createSignedUrl(formData.cedula_url, 60);
-                                                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                                            } catch(e) {}
-                                        }}>
-                                            <FileText size={14} /> Ver Cédula Actual
-                                        </button>
-                                        <button type="button" onClick={() => setFormData({...formData, cedula_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar cédula actual">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ) : formData.cedulaFile ? (
-                                    <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
-                                        <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
-                                            <FileText size={14} /> {formData.cedulaFile.name}
-                                        </span>
-                                        <button type="button" onClick={() => setFormData({...formData, cedulaFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ) : null}
-                                <input key={formData.cedulaFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
-                                    if (e.target.files?.[0]) setFormData({...formData, cedulaFile: e.target.files[0]});
-                                }} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Datos Bancarios para Liquidación/Devoluciones</label>
+                                <input type="text" placeholder="IBAN, Banco, Cuenta o SINPE" value={formData.datosBancarios} onChange={e => setFormData({...formData, datosBancarios: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Pasaporte (Archivo)</label>
-                                {formData.pasaporte_url && !formData.pasaporteFile ? (
-                                    <div className="flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-100 mb-2">
-                                        <button type="button" className="text-xs text-blue-700 hover:underline flex items-center gap-1.5 font-medium" onClick={async () => {
-                                            try {
-                                                const { data } = await supabase.storage.from('documents').createSignedUrl(formData.pasaporte_url, 60);
-                                                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                                            } catch(e) {}
-                                        }}>
-                                            <FileText size={14} /> Ver Pasaporte Actual
-                                        </button>
-                                        <button type="button" onClick={() => setFormData({...formData, pasaporte_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar pasaporte actual">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ) : formData.pasaporteFile ? (
-                                    <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
-                                        <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
-                                            <FileText size={14} /> {formData.pasaporteFile.name}
-                                        </span>
-                                        <button type="button" onClick={() => setFormData({...formData, pasaporteFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ) : null}
-                                <input key={formData.pasaporteFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
-                                    if (e.target.files?.[0]) setFormData({...formData, pasaporteFile: e.target.files[0]});
-                                }} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Domicilio Contractual para Notificaciones</label>
+                                <input type="text" placeholder="Dirección para recibir notificaciones legales..." value={formData.domicilioContractual} onChange={e => setFormData({...formData, domicilioContractual: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                             </div>
                         </div>
                     </div>
 
+                    {/* Activos Administrados */}
+                    <div>
+                        <h4 className="text-sm font-bold text-gray-900 border-b pb-2 mb-4 flex items-center gap-2">
+                            <Briefcase size={16} className="text-indigo-600" /> Activos Administrados
+                        </h4>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción de Activos y/o Montos Custodiados</label>
+                            <textarea rows={3} placeholder="Detalle los fondos, bienes inmuebles, acciones u otros activos bajo custodia o administración..." value={formData.activosAdministrados} onChange={e => setFormData({...formData, activosAdministrados: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                        </div>
+                    </div>
+
+                    {/* Servicios Contratados */}
                     <div>
                         <div className="flex justify-between items-center border-b pb-2 mb-4">
-                            <h4 className="text-sm font-semibold text-gray-900">Detalles del Servicio</h4>
-                            <button id="tour-client-add-service-btn" type="button" disabled={isTourMode && currentTourStepId !== 'clients-add-practice-add-service'} onFocus={handleAddServiceFocus} onMouseEnter={handleAddServiceFocus} onClick={addService} className={`text-xs flex items-center gap-1 font-medium ${(isTourMode && currentTourStepId !== 'clients-add-practice-add-service') ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'}`}>
+                            <h4 className="text-sm font-bold text-gray-900">Detalles del Servicio</h4>
+                            <button id="tour-client-add-service-btn" type="button" disabled={isTourMode && currentTourStepId !== 'clients-add-practice-add-service'} onClick={addService} className={`text-xs flex items-center gap-1 font-medium ${(isTourMode && currentTourStepId !== 'clients-add-practice-add-service') ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'}`}>
                                 <Plus size={14} /> Añadir Servicio
                             </button>
                         </div>
@@ -2018,7 +2415,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-6 pt-4">
+                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
                         <Button type="button" variant="outline" onClick={onClose} disabled={isTourMode}>Cancelar</Button>
                         <Button id="tour-client-save-btn" type="submit" variant="primary" disabled={isTourMode && currentTourStepId !== 'clients-add-practice-save'}>Guardar</Button>
                     </div>
@@ -2974,7 +3371,7 @@ const ClientsListView = () => {
         const newClient = {
             ...data,
             id: `client_${Date.now()}`,
-            number: String(clients.length + 1).padStart(3, '0'),
+            number: getNextClientNumber(clients),
             dateAdded: new Date().toISOString().split('T')[0]
         };
         setClients([...clients, newClient]);
@@ -3130,7 +3527,7 @@ const formatBytes = (bytes: number, decimals = 2) => {
 };
 
 const ClientProfileView = () => {
-    const { selectedClientId, getClientData, clients, setClients, tasks, setTasks, documents, setDocuments, navigateTo, products, clientActiveTab, setClientActiveTab, previousView, profile, isTourMode, currentTourStepId } = useContext(AppContext);
+    const { selectedClientId, getClientData, clients, setClients, tasks, setTasks, documents, setDocuments, navigateTo, products, clientActiveTab, setClientActiveTab, previousView, profile, isTourMode, currentTourStepId, showToast } = useContext(AppContext);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<any>(null);
@@ -3330,62 +3727,213 @@ const ClientProfileView = () => {
             <div className="mt-6">
                 {clientActiveTab === 'general' && (
                     <div className="space-y-6">
-                        {/* Info Principal */}
+                        {/* Bloque 1: Tipo de Cliente e Información Principal */}
                         <Card id="tour-client-general-card" className="space-y-6 animate-stagger" style={{ animationDelay: '300ms' }}>
-                            <h3 id="tour-client-personal-info" className="text-lg font-semibold border-b border-gray-100 pb-2">Información Personal</h3>
-                            <div id="tour-client-info-grid" className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-3 gap-2">
+                                <h3 id="tour-client-personal-info" className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <User size={18} className="text-[#488fcc]" /> Tipo de Cliente e Identificación
+                                </h3>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                                    client.tipoCliente === 'Persona Jurídica'
+                                        ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                        : 'bg-blue-50 text-blue-700 border-blue-200'
+                                }`}>
+                                    {client.tipoCliente === 'Persona Jurídica' ? <Building2 size={13} /> : <User size={13} />}
+                                    {client.tipoCliente || 'Persona Física'}
+                                </span>
+                            </div>
+
+                            <div id="tour-client-info-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Correo Electrónico</label>
+                                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Correo Electrónico</label>
                                     <p className="mt-1 font-medium text-gray-900 flex items-center gap-2">
-                                        {client.email} <Copy size={14} className="text-gray-400 cursor-pointer hover:text-gray-600" />
+                                        {client.email || '—'} {client.email && <Copy size={14} className="text-gray-400 cursor-pointer hover:text-gray-600" onClick={() => navigator.clipboard.writeText(client.email)} />}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Número Telefónico</label>
-                                    <p className="mt-1 font-medium text-gray-900">{client.phone}</p>
+                                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Número Telefónico</label>
+                                    <p className="mt-1 font-medium text-gray-900">{client.phone || '—'}</p>
                                 </div>
-                                {client.nacionalidad && (
-                                    <div>
-                                        <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Nacionalidad</label>
-                                        <p className="mt-1 font-medium text-gray-900">{client.nacionalidad}</p>
-                                    </div>
+
+                                {client.tipoCliente === 'Persona Jurídica' ? (
+                                    <>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Personería Jurídica</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.personeriaJuridica || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Representante Legal</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.representanteLegal || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Actividad Económica</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.actividadEconomica || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Domicilio de la Sociedad</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.domicilio || '—'}</p>
+                                        </div>
+                                        <div className="md:col-span-2 lg:col-span-3">
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold block mb-1">Composición Societaria / Beneficiarios Finales</label>
+                                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm text-gray-800 whitespace-pre-wrap">
+                                                {client.composicionSocietaria || 'No especificada'}
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Cédula de Identidad</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.cedulaNumero || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Nacionalidad</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.nacionalidad || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Estado Civil</label>
+                                            <p className="mt-1 font-medium text-gray-900 capitalize">{client.estadoCivil || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Profesión u Oficio</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.profesionOficio || '—'}</p>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Domicilio</label>
+                                            <p className="mt-1 font-medium text-gray-900">{client.domicilio || '—'}</p>
+                                        </div>
+                                    </>
                                 )}
-                                {client.estadoCivil && (
-                                    <div>
-                                        <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Estado Civil</label>
-                                        <p className="mt-1 font-medium text-gray-900">{client.estadoCivil}</p>
-                                    </div>
-                                )}
-                                {(client.cedula_url || client.pasaporte_url) && (
-                                    <div className="md:col-span-2">
-                                        <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2 block">Documentos de Identidad</label>
-                                        <div className="flex gap-4">
-                                            {client.cedula_url && (
+                            </div>
+
+                            {/* Documentos Adjuntos de Identificación (Consulta) */}
+                            <div className="border-t border-gray-100 pt-4">
+                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 block">Documento Adjunto de Identificación</label>
+                                <div>
+                                    {client.tipoCliente === 'Persona Jurídica' ? (
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-semibold text-gray-700">Personería Jurídica:</span>
+                                            {client.personeria_url ? (
+                                                <button onClick={async () => {
+                                                    try {
+                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(client.personeria_url, 60);
+                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                                    } catch (e) {}
+                                                }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold border border-blue-200/80 transition-colors">
+                                                    <FileText size={14} /> Ver Documento de Personería
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-gray-400 font-normal italic">Sin archivo adjunto</span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-semibold text-gray-700">Cédula de Identidad:</span>
+                                            {client.cedula_url ? (
                                                 <button onClick={async () => {
                                                     try {
                                                         const { data } = await supabase.storage.from('documents').createSignedUrl(client.cedula_url, 60);
                                                         if (data?.signedUrl) window.open(data.signedUrl, '_blank');
                                                     } catch (e) {}
-                                                }} className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                                    <FileText size={16} /> Cédula
+                                                }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold border border-blue-200/80 transition-colors">
+                                                    <FileText size={14} /> Ver Cédula de Identidad
                                                 </button>
-                                            )}
-                                            {client.pasaporte_url && (
-                                                <button onClick={async () => {
-                                                    try {
-                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(client.pasaporte_url, 60);
-                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                                                    } catch (e) {}
-                                                }} className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                                    <FileText size={16} /> Pasaporte
-                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-gray-400 font-normal italic">Sin archivo adjunto</span>
                                             )}
                                         </div>
-                                    </div>
+                                    )}
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Bloque 2: Debida Diligencia AML/CFT/CFP */}
+                        <Card className="space-y-4 border-l-4 border-l-emerald-500 animate-stagger" style={{ animationDelay: '350ms' }}>
+                            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <ShieldCheck size={18} className="text-emerald-600" /> Debida Diligencia AML / CFT / CFP
+                                </h3>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                                    client.debidaDiligenciaCompletada
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}>
+                                    {client.debidaDiligenciaCompletada ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+                                    {client.debidaDiligenciaCompletada ? 'Completada' : 'Pendiente / En Revisión'}
+                                </span>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Observaciones / Notas de Cumplimiento</label>
+                                <p className="mt-1 text-sm text-gray-800 bg-gray-50 p-3 rounded-xl border border-gray-100 whitespace-pre-wrap">
+                                    {client.debidaDiligenciaNotas || 'Sin observaciones registradas.'}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+                                <span className="text-xs font-semibold text-gray-700">Documento de Respaldo AML:</span>
+                                {client.debida_diligencia_url ? (
+                                    <button onClick={async () => {
+                                        try {
+                                            const { data } = await supabase.storage.from('documents').createSignedUrl(client.debida_diligencia_url, 60);
+                                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                        } catch (e) {}
+                                    }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold border border-emerald-200/80 transition-colors">
+                                        <FileText size={14} /> Ver Respaldo AML
+                                    </button>
+                                ) : (
+                                    <span className="text-xs text-gray-400 font-normal italic">Sin archivo adjunto</span>
                                 )}
                             </div>
- 
-                            <h3 id="tour-client-services" className="text-lg font-semibold border-b border-gray-100 pb-2 pt-4">Detalles del Servicio</h3>
+                        </Card>
+
+                        {/* Bloque 3: Datos Contractuales */}
+                        <Card className="space-y-4 animate-stagger" style={{ animationDelay: '400ms' }}>
+                            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                                <FileText size={18} className="text-[#488fcc]" /> Datos Contractuales
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Calidad en que actúa</label>
+                                    <div className="mt-1">
+                                        {client.calidadActua ? (
+                                            <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-200">
+                                                {client.calidadActua}
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm text-gray-500">No especificada</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Datos Bancarios</label>
+                                    <p className="mt-1 font-medium text-gray-900 text-sm">{client.datosBancarios || '—'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Domicilio Contractual (Notificaciones)</label>
+                                    <p className="mt-1 font-medium text-gray-900 text-sm">{client.domicilioContractual || '—'}</p>
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Bloque 4: Activos Administrados */}
+                        <Card className="space-y-4 animate-stagger" style={{ animationDelay: '450ms' }}>
+                            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                                <Briefcase size={18} className="text-indigo-600" /> Activos Administrados
+                            </h3>
+                            <div>
+                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Descripción / Montos Custodiados</label>
+                                <div className="mt-2 text-sm text-gray-800 bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap">
+                                    {client.activosAdministrados || 'Sin activos registrados para administración.'}
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Bloque 5: Detalles del Servicio */}
+                        <Card className="space-y-4 animate-stagger" style={{ animationDelay: '500ms' }}>
+                            <h3 id="tour-client-services" className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                                <Package size={18} className="text-[#488fcc]" /> Detalles del Servicio
+                            </h3>
                             <div className="grid grid-cols-1 gap-y-4">
                                 {client.services && client.services.length > 0 ? (
                                     client.services.map((service: any, idx: number) => {
