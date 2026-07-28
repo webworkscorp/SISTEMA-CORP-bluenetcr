@@ -98,10 +98,10 @@ const EmptyClientsIllustration = ({
     </div>
 );
 
-// 4. Servicios / Portafolio
+// 4. Servicios / Catálogo
 const EmptyServicesIllustration = ({ 
     title = "Catálogo sin Servicios", 
-    description = "No hay servicios agregados. Crea soluciones en tu catálogo de productos." 
+    description = "No hay servicios agregados. Crea soluciones en tu catálogo de servicios." 
 }: { title?: string, description?: string }) => (
     <div className="flex flex-col items-center justify-center py-10 text-center animate-stagger">
         <div className="relative w-36 h-28 mb-3 flex items-center justify-center">
@@ -487,12 +487,14 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [profile, setProfile] = useState<{
         name: string;
         email: string;
+        telefono?: string;
         photo: string;
         role: string;
         ha_visto_tutorial?: boolean;
     }>({
         name: 'Usuario ERP',
         email: '',
+        telefono: '',
         photo: '',
         role: 'usuario',
         ha_visto_tutorial: true // Default to true to prevent flash before load
@@ -616,17 +618,17 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
             { id: 't3', number: '003', name: 'Carlos Díaz', company: '', email: 'carlos.diaz@email.com', phone: '555-0303', status: 'Activo', dateAdded: new Date().toISOString().split('T')[0], services: [{ id: 'ts4', productId: 't3', amount: 800, status: 'activo' }] }
         ]);
         setTasks([
-            { id: 't1', name: 'Revisión trimestral', description: 'Revisar cuentas con el equipo de ventas.', status: 'Finalizada', priority: 'Alta', date: new Date().toISOString().split('T')[0], clientId: 't1', assignee: 'Ana Martínez' },
-            { id: 't2', name: 'Envío de propuesta', description: 'Propuesta de diseño web.', status: 'Finalizada', priority: 'Media', date: new Date().toISOString().split('T')[0], clientId: 't2', assignee: 'Roberto Gómez' },
-            { id: 't3', name: 'Configuración DNS', description: 'Migrar dominio a Cloudflare.', status: 'En Progreso', priority: 'Alta', date: new Date().toISOString().split('T')[0], clientId: 't1', assignee: 'Laura Ruiz' },
-            { id: 't4', name: 'Reunión de Onboarding', description: 'Presentar el equipo y objetivos del trimestre.', status: 'Finalizada', priority: 'Media', date: new Date().toISOString().split('T')[0], clientId: 't3', assignee: 'Ana Martínez' },
-            { id: 't6', name: 'Revisión de documentos', description: 'Validar la documentación técnica recibida.', status: 'Pendiente', priority: 'Media', date: new Date().toISOString().split('T')[0], clientId: 't3', assignee: 'Laura Ruiz' },
-            { id: 't5', name: 'Plan de pauta mensual', description: 'Ajustar presupuestos para campañas publicitarias.', status: 'Pendiente', priority: 'Baja', date: new Date().toISOString().split('T')[0], clientId: 't2', assignee: 'Roberto Gómez' }
+            { id: 't1', name: 'Revisión trimestral', description: 'Revisar cuentas con el equipo de ventas.', status: 'Finalizada', priority: 'Alta', date: new Date().toISOString().split('T')[0], clientId: 't1', assignee: 'Ana Martínez', assigneeEmail: 'ana.martinez@gmail.com', assigneePhoto: 'https://ui-avatars.com/api/?name=Ana+Martinez&background=f3f4f6&color=374151' },
+            { id: 't2', name: 'Envío de propuesta', description: 'Propuesta de diseño web.', status: 'Finalizada', priority: 'Media', date: new Date().toISOString().split('T')[0], clientId: 't2', assignee: 'Roberto Gómez', assigneeEmail: 'roberto.gomez@gmail.com', assigneePhoto: 'https://ui-avatars.com/api/?name=Roberto+Gomez&background=f3f4f6&color=374151' },
+            { id: 't3', name: 'Configuración DNS', description: 'Migrar dominio a Cloudflare.', status: 'En Progreso', priority: 'Alta', date: new Date().toISOString().split('T')[0], clientId: 't1', assignee: 'Laura Ruiz', assigneeEmail: 'laura.ruiz@gmail.com', assigneePhoto: 'https://ui-avatars.com/api/?name=Laura+Ruiz&background=f3f4f6&color=374151' },
+            { id: 't4', name: 'Reunión de Onboarding', description: 'Presentar el equipo y objetivos del trimestre.', status: 'Finalizada', priority: 'Media', date: new Date().toISOString().split('T')[0], clientId: 't3', assignee: 'Ana Martínez', assigneeEmail: 'ana.martinez@gmail.com', assigneePhoto: 'https://ui-avatars.com/api/?name=Ana+Martinez&background=f3f4f6&color=374151' },
+            { id: 't6', name: 'Revisión de documentos', description: 'Validar la documentación técnica recibida.', status: 'Pendiente', priority: 'Media', date: new Date().toISOString().split('T')[0], clientId: 't3', assignee: 'Laura Ruiz', assigneeEmail: 'laura.ruiz@gmail.com', assigneePhoto: 'https://ui-avatars.com/api/?name=Laura+Ruiz&background=f3f4f6&color=374151' },
+            { id: 't5', name: 'Servicio de pauta mensual', description: 'Ajustar presupuestos para campañas publicitarias.', status: 'Pendiente', priority: 'Baja', date: new Date().toISOString().split('T')[0], clientId: 't2', assignee: 'Roberto Gómez', assigneeEmail: 'roberto.gomez@gmail.com', assigneePhoto: 'https://ui-avatars.com/api/?name=Roberto+Gomez&background=f3f4f6&color=374151' }
         ]);
         setSystemUsers([
-            { id: 'u1', name: 'Ana Martínez', role: 'Admin', photo: 'https://ui-avatars.com/api/?name=Ana+Martinez&background=f3f4f6&color=374151' },
-            { id: 'u2', name: 'Roberto Gómez', role: 'Admin', photo: 'https://ui-avatars.com/api/?name=Roberto+Gomez&background=f3f4f6&color=374151' },
-            { id: 'u3', name: 'Laura Ruiz', role: 'Usuario', photo: 'https://ui-avatars.com/api/?name=Laura+Ruiz&background=f3f4f6&color=374151' }
+            { id: 'u1', name: 'Ana Martínez', email: 'ana.martinez@gmail.com', telefono: '', role: 'Admin', photo: 'https://ui-avatars.com/api/?name=Ana+Martinez&background=f3f4f6&color=374151' },
+            { id: 'u2', name: 'Roberto Gómez', email: 'roberto.gomez@gmail.com', telefono: '', role: 'Admin', photo: 'https://ui-avatars.com/api/?name=Roberto+Gomez&background=f3f4f6&color=374151' },
+            { id: 'u3', name: 'Laura Ruiz', email: 'laura.ruiz@gmail.com', telefono: '', role: 'Usuario', photo: 'https://ui-avatars.com/api/?name=Laura+Ruiz&background=f3f4f6&color=374151' }
         ]);
         const today = new Date().toISOString().split('T')[0];
         setDocuments([
@@ -659,6 +661,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 setProfile({
                     name: profileData.nombre,
                     email: user.email || '',
+                    telefono: profileData.telefono || '',
                     photo: profileData.foto_perfil_url || '',
                     role: profileData.rol || 'usuario',
                     ha_visto_tutorial: profileData.ha_visto_tutorial ?? false
@@ -670,6 +673,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     id: user.id,
                     nombre: fallbackName,
                     rol: user.email?.includes('admin') ? 'admin' : 'usuario',
+                    email: user.email,
                     ha_visto_tutorial: false
                 }).select().single();
 
@@ -677,6 +681,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     setProfile({
                         name: createdProfile.nombre,
                         email: user.email || '',
+                        telefono: createdProfile.telefono || '',
                         photo: createdProfile.foto_perfil_url || '',
                         role: createdProfile.rol || 'usuario',
                         ha_visto_tutorial: createdProfile.ha_visto_tutorial ?? false
@@ -749,6 +754,10 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     company: c.empresa || '',
                     email: c.correo,
                     phone: c.telefono || '',
+                    nacionalidad: c.nacionalidad || '',
+                    estadoCivil: c.estado_civil || '',
+                    cedula_url: c.cedula_url || null,
+                    pasaporte_url: c.pasaporte_url || null,
                     status: 'Activo',
                     dateAdded: c.fecha_creacion?.split('T')[0] || '',
                     services: c.cliente_servicios ? c.cliente_servicios.map((cs: any) => ({
@@ -772,7 +781,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
             // 4. Fetch tasks
             let { data: tasksData } = await supabase
                 .from('tareas')
-                .select('*, perfiles(nombre)')
+                .select('*, perfiles(nombre, email, foto_perfil_url)')
                 .order('fecha_limite', { ascending: true });
 
             if (tasksData) {
@@ -784,14 +793,16 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         id: t.id,
                         name: name,
                         description: description,
-                    assignee: t.perfiles?.nombre || 'Sin asignar',
-                    assigneeId: t.responsable_id || '',
-                    priority: t.prioridad ? (t.prioridad.charAt(0).toUpperCase() + t.prioridad.slice(1)) : 'Media',
-                    clientId: t.cliente_id,
-                    status: t.estado === 'finalizada' ? 'Finalizada' : 'Pendiente',
-                    date: t.fecha_limite
-                };
-            }));
+                        assignee: t.perfiles?.nombre || 'Sin asignar',
+                        assigneeEmail: t.perfiles?.email || '',
+                        assigneePhoto: t.perfiles?.foto_perfil_url || '',
+                        assigneeId: t.responsable_id || '',
+                        priority: t.prioridad ? (t.prioridad.charAt(0).toUpperCase() + t.prioridad.slice(1)) : 'Media',
+                        clientId: t.cliente_id,
+                        status: t.estado === 'finalizada' ? 'Finalizada' : 'Pendiente',
+                        date: t.fecha_limite
+                    };
+                }));
             }
 
             // 5. Fetch documents
@@ -873,7 +884,8 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 setSystemUsers(sortedPerfiles.map(p => ({
                     id: p.id,
                     name: p.nombre,
-                    email: p.id === user?.id ? user.email : (p.email || `${p.nombre.toLowerCase().replace(/\s+/g, '')}@corp.com`),
+                    email: p.id === user?.id ? user.email : (p.email || ''),
+                    telefono: p.telefono || '',
                     role: p.rol === 'admin' ? 'Admin' : 'Usuario',
                     status: 'Activo',
                     photo: p.foto_perfil_url || ''
@@ -934,10 +946,35 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         nombre: item.name,
                         empresa: item.company || null,
                         correo: item.email,
-                        telefono: item.phone || null
+                        telefono: item.phone || null,
+                        nacionalidad: item.nacionalidad || null,
+                        estado_civil: item.estadoCivil || null
                     }).select().single();
 
                     if (createdClient) {
+                        let cedulaUrl = null;
+                        let pasaporteUrl = null;
+
+                        if (item.cedulaFile) {
+                            const ext = item.cedulaFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${createdClient.id}/${Date.now()}_cedula.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.cedulaFile);
+                            if (!uploadError) cedulaUrl = filePath;
+                        }
+                        if (item.pasaporteFile) {
+                            const ext = item.pasaporteFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${createdClient.id}/${Date.now()}_pasaporte.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.pasaporteFile);
+                            if (!uploadError) pasaporteUrl = filePath;
+                        }
+
+                        if (cedulaUrl || pasaporteUrl) {
+                            const updateData: any = {};
+                            if (cedulaUrl) updateData.cedula_url = cedulaUrl;
+                            if (pasaporteUrl) updateData.pasaporte_url = pasaporteUrl;
+                            await supabase.from('clientes').update(updateData).eq('id', createdClient.id);
+                        }
+
                         // Insert assigned services
                         if (item.services && item.services.length > 0) {
                             const servicesToInsert = item.services.map((s: any) => ({
@@ -954,7 +991,9 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             ...c,
                             id: createdClient.id,
                             number: createdClient.numero_cliente?.replace('#', '') || c.number,
-                            dateAdded: createdClient.fecha_creacion?.split('T')[0] || c.dateAdded
+                            dateAdded: createdClient.fecha_creacion?.split('T')[0] || c.dateAdded,
+                            cedula_url: cedulaUrl,
+                            pasaporte_url: pasaporteUrl
                         } : c);
                     }
                 }
@@ -983,13 +1022,66 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 // Updated client
                 for (const item of newClients) {
                     const existing = clients.find((c: any) => c.id === item.id);
-                    if (existing && (existing.name !== item.name || existing.company !== item.company || existing.email !== item.email || existing.phone !== item.phone || JSON.stringify(existing.services) !== JSON.stringify(item.services))) {
-                        await supabase.from('clientes').update({
+                    if (existing && (
+                        existing.name !== item.name || 
+                        existing.company !== item.company || 
+                        existing.email !== item.email || 
+                        existing.phone !== item.phone || 
+                        existing.nacionalidad !== item.nacionalidad || 
+                        existing.estadoCivil !== item.estadoCivil || 
+                        existing.cedula_url !== item.cedula_url ||
+                        existing.pasaporte_url !== item.pasaporte_url ||
+                        item.cedulaFile || 
+                        item.pasaporteFile || 
+                        JSON.stringify(existing.services) !== JSON.stringify(item.services)
+                    )) {
+                        const updateData: any = {
                             nombre: item.name,
                             empresa: item.company || null,
                             correo: item.email,
-                            telefono: item.phone || null
-                        }).eq('id', item.id);
+                            telefono: item.phone || null,
+                            nacionalidad: item.nacionalidad || null,
+                            estado_civil: item.estadoCivil || null,
+                            cedula_url: item.cedula_url || null,
+                            pasaporte_url: item.pasaporte_url || null
+                        };
+
+                        if (existing.cedula_url && !item.cedula_url) {
+                            try {
+                                await supabase.storage.from('documents').remove([existing.cedula_url]);
+                            } catch (e) {
+                                console.error('Error deleting cedula from storage:', e);
+                            }
+                        }
+
+                        if (existing.pasaporte_url && !item.pasaporte_url) {
+                            try {
+                                await supabase.storage.from('documents').remove([existing.pasaporte_url]);
+                            } catch (e) {
+                                console.error('Error deleting pasaporte from storage:', e);
+                            }
+                        }
+
+                        if (item.cedulaFile) {
+                            const ext = item.cedulaFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${item.id}/${Date.now()}_cedula.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.cedulaFile);
+                            if (!uploadError) {
+                                updateData.cedula_url = filePath;
+                                item.cedula_url = filePath;
+                            }
+                        }
+                        if (item.pasaporteFile) {
+                            const ext = item.pasaporteFile.name.split('.').pop() || 'pdf';
+                            const filePath = `${item.id}/${Date.now()}_pasaporte.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, item.pasaporteFile);
+                            if (!uploadError) {
+                                updateData.pasaporte_url = filePath;
+                                item.pasaporte_url = filePath;
+                            }
+                        }
+
+                        await supabase.from('clientes').update(updateData).eq('id', item.id);
 
                         // Sync services: delete existing and re-insert
                         await supabase.from('cliente_servicios').delete().eq('cliente_id', item.id);
@@ -1242,6 +1334,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 await supabase.from('perfiles').update({
                     nombre: newProfile.name,
                     foto_perfil_url: newProfile.photo,
+                    telefono: newProfile.telefono,
                     ha_visto_tutorial: newProfile.ha_visto_tutorial
                 }).eq('id', user.id);
             }
@@ -1263,6 +1356,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     const { data: createdProfile } = await supabase.from('perfiles').insert({
                         nombre: item.name,
                         rol: item.role === 'Admin' ? 'admin' : 'usuario',
+                        email: item.email || '',
                         foto_perfil_url: item.photo || ''
                     }).select().single();
 
@@ -1631,6 +1725,12 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
         idNumber: '',
         email: '',
         phone: '',
+        nacionalidad: '',
+        estadoCivil: '',
+        cedulaFile: null as File | null,
+        pasaporteFile: null as File | null,
+        cedula_url: '',
+        pasaporte_url: '',
         services: [] as any[],
         status: 'Activo'
     });
@@ -1639,6 +1739,12 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
         if (initialData) {
             setFormData({
                 ...initialData,
+                nacionalidad: initialData.nacionalidad || '',
+                estadoCivil: initialData.estadoCivil || '',
+                cedulaFile: null,
+                pasaporteFile: null,
+                cedula_url: initialData.cedula_url || '',
+                pasaporte_url: initialData.pasaporte_url || '',
                 services: initialData.services || (initialData.productId ? [{ productId: initialData.productId, amount: initialData.amount }] : [])
             });
         } else {
@@ -1649,11 +1755,17 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                     idNumber: '',
                     email: 'practica@bluenet.com',
                     phone: '+1 (555) 0199',
+                    nacionalidad: '',
+                    estadoCivil: '',
+                    cedulaFile: null,
+                    pasaporteFile: null,
+                    cedula_url: '',
+                    pasaporte_url: '',
                     services: [],
                     status: 'Activo'
                 });
             } else {
-                setFormData({ name: '', company: '', idNumber: '', email: '', phone: '', services: [], status: 'Activo' });
+                setFormData({ name: '', company: '', idNumber: '', email: '', phone: '', nacionalidad: '', estadoCivil: '', cedulaFile: null, pasaporteFile: null, cedula_url: '', pasaporte_url: '', services: [], status: 'Activo' });
             }
         }
     }, [initialData, isOpen, isTourMode]);
@@ -1757,23 +1869,94 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                 <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
                     
                     <div>
-                        <h4 className="text-sm font-semibold text-gray-900 border-b pb-2 mb-4">Información Principal</h4>
+                        <h4 className="text-sm font-semibold text-gray-900 border-b pb-2 mb-4">Información Personal</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
                                 <input id="tour-client-name" required type="text" value={formData.name} disabled={isTourMode && currentTourStepId !== 'clients-add-practice-name'} onChange={e => setFormData({...formData, name: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && currentTourStepId !== 'clients-add-practice-name' ? 'bg-gray-50' : ''}`} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa <span className="text-gray-400 font-normal text-xs">(Opcional)</span></label>
-                                <input id="tour-client-company" type="text" value={formData.company} disabled={isTourMode && currentTourStepId !== 'clients-add-practice-company'} onFocus={handleCompanyFocus} onChange={e => setFormData({...formData, company: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && currentTourStepId !== 'clients-add-practice-company' ? 'bg-gray-50' : ''}`} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
                                 <input id="tour-client-email" required type="email" disabled={isTourMode && !initialData} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Número Telefónico</label>
                                 <input id="tour-client-phone" type="text" disabled={isTourMode && !initialData} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nacionalidad</label>
+                                <input id="tour-client-nationality" type="text" disabled={isTourMode && !initialData} value={formData.nacionalidad} onChange={e => setFormData({...formData, nacionalidad: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Estado Civil</label>
+                                <select id="tour-client-civil-status" disabled={isTourMode && !initialData} value={formData.estadoCivil} onChange={e => setFormData({...formData, estadoCivil: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent bg-white text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}>
+                                    <option value="">Seleccione...</option>
+                                    <option value="Soltero/a">Soltero/a</option>
+                                    <option value="Casado/a">Casado/a</option>
+                                    <option value="Divorciado/a">Divorciado/a</option>
+                                    <option value="Viudo/a">Viudo/a</option>
+                                    <option value="Unión Libre">Unión Libre</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Cédula de Identidad (Archivo)</label>
+                                {formData.cedula_url && !formData.cedulaFile ? (
+                                    <div className="flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-100 mb-2">
+                                        <button type="button" className="text-xs text-blue-700 hover:underline flex items-center gap-1.5 font-medium" onClick={async () => {
+                                            try {
+                                                const { data } = await supabase.storage.from('documents').createSignedUrl(formData.cedula_url, 60);
+                                                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                            } catch(e) {}
+                                        }}>
+                                            <FileText size={14} /> Ver Cédula Actual
+                                        </button>
+                                        <button type="button" onClick={() => setFormData({...formData, cedula_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar cédula actual">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                ) : formData.cedulaFile ? (
+                                    <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
+                                        <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
+                                            <FileText size={14} /> {formData.cedulaFile.name}
+                                        </span>
+                                        <button type="button" onClick={() => setFormData({...formData, cedulaFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ) : null}
+                                <input key={formData.cedulaFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
+                                    if (e.target.files?.[0]) setFormData({...formData, cedulaFile: e.target.files[0]});
+                                }} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Pasaporte (Archivo)</label>
+                                {formData.pasaporte_url && !formData.pasaporteFile ? (
+                                    <div className="flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-100 mb-2">
+                                        <button type="button" className="text-xs text-blue-700 hover:underline flex items-center gap-1.5 font-medium" onClick={async () => {
+                                            try {
+                                                const { data } = await supabase.storage.from('documents').createSignedUrl(formData.pasaporte_url, 60);
+                                                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                            } catch(e) {}
+                                        }}>
+                                            <FileText size={14} /> Ver Pasaporte Actual
+                                        </button>
+                                        <button type="button" onClick={() => setFormData({...formData, pasaporte_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar pasaporte actual">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                ) : formData.pasaporteFile ? (
+                                    <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
+                                        <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
+                                            <FileText size={14} /> {formData.pasaporteFile.name}
+                                        </span>
+                                        <button type="button" onClick={() => setFormData({...formData, pasaporteFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ) : null}
+                                <input key={formData.pasaporteFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
+                                    if (e.target.files?.[0]) setFormData({...formData, pasaporteFile: e.target.files[0]});
+                                }} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                             </div>
                         </div>
                     </div>
@@ -1790,9 +1973,9 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                             {formData.services.map((service: any, index: number) => (
                                 <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100 relative animate-in fade-in duration-150">
                                     <div className="md:col-span-6">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Producto Contratado</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1">Servicio Contratado</label>
                                         <select id="tour-client-service-select" required value={service.productId} disabled={isTourMode && !['clients-add-practice-add-service', 'clients-add-practice-select-product'].includes(currentTourStepId || '')} onChange={e => updateService(index, 'productId', e.target.value)} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent bg-white text-sm ${isTourMode && !['clients-add-practice-add-service', 'clients-add-practice-select-product'].includes(currentTourStepId || '') ? 'bg-gray-50' : ''}`}>
-                                            <option value="">Seleccione un producto</option>
+                                            <option value="">Seleccione un servicio</option>
                                             {products.map((p: any) => (
                                                 <option key={p.id} value={p.id}>{p.name}</option>
                                             ))}
@@ -1936,6 +2119,7 @@ const TaskFormModal = ({ isOpen, onClose, onSubmit, clientId = '', initialData =
                 return {
                     id: u.id || `u-${index}`,
                     name: u.name || u.nombre || 'Integrante',
+                    email: u.email || u.correo || '',
                     role: u.role || 'Usuario',
                     photo: u.photo || u.foto_perfil_url || '',
                     color: colors[index % colors.length]
@@ -2010,6 +2194,9 @@ const TaskFormModal = ({ isOpen, onClose, onSubmit, clientId = '', initialData =
     const handleSubmit = (e: any) => {
         e.preventDefault();
         const finalAssignee = formData.assignee;
+        const matchingMember = availableMembers.find((m: any) => m.name === finalAssignee);
+        const finalAssigneeEmail = matchingMember ? matchingMember.email : '';
+        const finalAssigneePhoto = matchingMember ? (matchingMember.photo || matchingMember.foto_perfil_url) : '';
         if (isTourMode) {
             const tour = (window as any).shepherdTour;
             if (tour && tour.getCurrentStep()?.id === 'task-form-save') {
@@ -2018,7 +2205,9 @@ const TaskFormModal = ({ isOpen, onClose, onSubmit, clientId = '', initialData =
         }
         onSubmit({
             ...formData,
-            assignee: finalAssignee || 'Sin asignar'
+            assignee: finalAssignee || 'Sin asignar',
+            assigneeEmail: finalAssigneeEmail,
+            assigneePhoto: finalAssigneePhoto || ''
         });
     };
 
@@ -2471,7 +2660,7 @@ const DashboardView = () => {
                         <div className="p-2 bg-white/10 rounded-lg text-[#488fcc]"><DollarSign size={20} /></div>
                         <span className="text-sm bg-white/10 px-2 py-1 rounded-full text-white/90">Ingreso activo</span>
                     </div>
-                    <p className="text-white/70 text-sm">Total ventas</p>
+                    <p className="text-white/70 text-sm">Total Comisiones ingresadas</p>
                     <h3 className="text-3xl font-bold mt-1 text-white">${totalSales.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                     {paidCommissionsSum > 0 && (
                         <p className="text-[11px] text-emerald-300 mt-1.5 font-medium flex items-center gap-1">
@@ -2525,7 +2714,7 @@ const DashboardView = () => {
 
                 <Card id="tour-stat-products" className="bg-[#0f766e] border-none text-white flex flex-col justify-between animate-stagger" style={{ animationDelay: '400ms' }}>
                     <div>
-                        <p className="text-white/80 text-sm mb-1">Portafolio</p>
+                        <p className="text-white/80 text-sm mb-1">Catálogo</p>
                         <h3 className="text-xl font-bold">Servicios</h3>
                         <p className="text-xs text-white/60 mt-0.5">{products.length} En catálogo</p>
                     </div>
@@ -2705,8 +2894,8 @@ const DashboardView = () => {
                                 <thead className="text-xs text-gray-500 uppercase bg-gray-50/50 border-y border-gray-100">
                                     <tr>
                                         <th className="px-4 py-3 font-medium">Cliente</th>
-                                        <th className="px-4 py-3 font-medium">Empresa</th>
-                                        <th className="px-4 py-3 font-medium">Producto</th>
+                                        <th className="px-4 py-3 font-medium">Contacto</th>
+                                        <th className="px-4 py-3 font-medium">Servicio</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2718,7 +2907,7 @@ const DashboardView = () => {
                                                 <td className="px-4 py-3">
                                                     <div className="font-medium text-gray-900">{client.name}</div>
                                                 </td>
-                                                <td className="px-4 py-3 text-gray-600">{client.company || '-'}</td>
+                                                <td className="px-4 py-3 text-gray-600">{client.phone || '-'}</td>
                                                 <td className="px-4 py-3 text-gray-600 truncate max-w-xs" title={productsLabel}>{productsLabel}</td>
                                             </tr>
                                         );
@@ -2803,7 +2992,7 @@ const ClientsListView = () => {
                 { id: `d_${Date.now()}_1`, clientId: newClient.id, name: `Contrato de Servicios - ${newClient.name}.pdf`, customName: 'Contrato de Servicios', ext: 'pdf', type: 'PDF', size: '245 KB', url: '#', date: today },
                 { id: `d_${Date.now()}_2`, clientId: newClient.id, name: 'Propuesta Comercial Inicial.pdf', customName: 'Propuesta Comercial', ext: 'pdf', type: 'PDF', size: '1.2 MB', url: '#', date: today },
                 { id: `d_${Date.now()}_3`, clientId: newClient.id, name: 'Auditoría Técnica de Sistemas.docx', customName: 'Auditoría de Sistemas', ext: 'docx', type: 'DOCX', size: '89 KB', url: '#', date: today },
-                { id: `d_${Date.now()}_4`, clientId: newClient.id, name: 'Plan de Trabajo Detallado.xlsx', customName: 'Plan de Trabajo', ext: 'xlsx', type: 'XLSX', size: '42 KB', url: '#', date: today }
+                { id: `d_${Date.now()}_4`, clientId: newClient.id, name: 'Servicio de Trabajo Detallado.xlsx', customName: 'Servicio de Trabajo', ext: 'xlsx', type: 'XLSX', size: '42 KB', url: '#', date: today }
             ];
             setTasks([...tasks, ...newTasks]);
             setDocuments([...documents, ...newDocs]);
@@ -2867,9 +3056,6 @@ const ClientsListView = () => {
                                     
                                     <h3 className="text-lg font-semibold text-gray-900 mb-1">{client.name}</h3>
                                     <div className="flex flex-col gap-1 mb-4">
-                                        <p className="text-sm text-gray-500 flex items-center gap-2">
-                                            <Building size={14} /> {client.company || 'Sin empresa'}
-                                        </p>
                                         <p className="text-xs text-gray-400 flex items-center gap-2">
                                             <Calendar size={14} /> {client.dateAdded ? new Date(client.dateAdded).toLocaleDateString() : 'Sin fecha'}
                                         </p>
@@ -3077,7 +3263,6 @@ const ClientProfileView = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">{client.name}</h1>
                     <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
-                        <span className="flex items-center gap-1"><Building size={16} /> {client.company || 'Sin empresa'}</span>
                         <span className="flex items-center gap-1"><Calendar size={16} /> Registrado: {client.dateAdded ? new Date(client.dateAdded).toLocaleDateString() : 'Sin fecha'}</span>
                     </div>
                 </div>
@@ -3147,7 +3332,7 @@ const ClientProfileView = () => {
                     <div className="space-y-6">
                         {/* Info Principal */}
                         <Card id="tour-client-general-card" className="space-y-6 animate-stagger" style={{ animationDelay: '300ms' }}>
-                            <h3 id="tour-client-personal-info" className="text-lg font-semibold border-b border-gray-100 pb-2">Información Principal</h3>
+                            <h3 id="tour-client-personal-info" className="text-lg font-semibold border-b border-gray-100 pb-2">Información Personal</h3>
                             <div id="tour-client-info-grid" className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
                                 <div>
                                     <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Correo Electrónico</label>
@@ -3156,9 +3341,48 @@ const ClientProfileView = () => {
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Teléfono</label>
+                                    <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Número Telefónico</label>
                                     <p className="mt-1 font-medium text-gray-900">{client.phone}</p>
                                 </div>
+                                {client.nacionalidad && (
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Nacionalidad</label>
+                                        <p className="mt-1 font-medium text-gray-900">{client.nacionalidad}</p>
+                                    </div>
+                                )}
+                                {client.estadoCivil && (
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Estado Civil</label>
+                                        <p className="mt-1 font-medium text-gray-900">{client.estadoCivil}</p>
+                                    </div>
+                                )}
+                                {(client.cedula_url || client.pasaporte_url) && (
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2 block">Documentos de Identidad</label>
+                                        <div className="flex gap-4">
+                                            {client.cedula_url && (
+                                                <button onClick={async () => {
+                                                    try {
+                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(client.cedula_url, 60);
+                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                                    } catch (e) {}
+                                                }} className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                    <FileText size={16} /> Cédula
+                                                </button>
+                                            )}
+                                            {client.pasaporte_url && (
+                                                <button onClick={async () => {
+                                                    try {
+                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(client.pasaporte_url, 60);
+                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                                    } catch (e) {}
+                                                }} className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                    <FileText size={16} /> Pasaporte
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
  
                             <h3 id="tour-client-services" className="text-lg font-semibold border-b border-gray-100 pb-2 pt-4">Detalles del Servicio</h3>
@@ -3169,7 +3393,7 @@ const ClientProfileView = () => {
                                         return (
                                             <div key={idx} className="flex flex-col md:flex-row justify-between md:items-center bg-gray-50 p-4 rounded-xl border border-gray-100 gap-4">
                                                 <div>
-                                                    <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Producto Contratado</label>
+                                                    <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Servicio Contratado</label>
                                                     <p className="mt-1 font-medium text-gray-900 flex items-center gap-2">
                                                         <Package size={16} className="text-[#488fcc]" /> {prod?.name || 'Desconocido'}
                                                     </p>
@@ -3327,7 +3551,14 @@ const ClientProfileView = () => {
                                                     </h4>
                                                     <p className="text-sm text-gray-500 mt-1">{task.description}</p>
                                                     <div className="flex items-center gap-3 mt-3 text-xs text-gray-500 font-medium">
-                                                        <span className="flex items-center gap-1"><User size={12}/> {task.assignee}</span>
+                                                        <span className="flex items-center gap-1.5">
+                                                            {task.assigneePhoto ? (
+                                                                <img src={task.assigneePhoto} referrerPolicy="no-referrer" className="w-5 h-5 rounded-full object-cover border border-gray-100" alt={task.assignee} />
+                                                            ) : (
+                                                                <User size={12}/>
+                                                            )}
+                                                            <span>{task.assignee} {task.assigneeEmail ? `(${task.assigneeEmail})` : ''}</span>
+                                                        </span>
                                                         <span className="flex items-center gap-1"><Clock size={12}/> {task.date}</span>
                                                         <Badge type={task.priority === 'Alta' ? 'danger' : 'warning'}>{task.priority}</Badge>
                                                     </div>
@@ -3389,7 +3620,14 @@ const ClientProfileView = () => {
                                                         </h4>
                                                         <p className="text-sm text-gray-500 mt-1 line-through">{task.description}</p>
                                                         <div className="flex items-center gap-3 mt-3 text-xs text-gray-500 font-medium">
-                                                            <span className="flex items-center gap-1"><User size={12}/> {task.assignee}</span>
+                                                            <span className="flex items-center gap-1.5">
+                                                                {task.assigneePhoto ? (
+                                                                    <img src={task.assigneePhoto} referrerPolicy="no-referrer" className="w-5 h-5 rounded-full object-cover border border-gray-100 opacity-70" alt={task.assignee} />
+                                                                ) : (
+                                                                    <User size={12}/>
+                                                                )}
+                                                                <span>{task.assignee} {task.assigneeEmail ? `(${task.assigneeEmail})` : ''}</span>
+                                                            </span>
                                                             <span className="flex items-center gap-1"><Clock size={12}/> {task.date}</span>
                                                             <Badge type={task.priority === 'Alta' ? 'danger' : 'warning'}>{task.priority}</Badge>
                                                         </div>
@@ -3938,7 +4176,7 @@ const ProductsView = () => {
         <div id="tour-products-grid">
             <GenericListView 
                 title="Catálogo de Servicios" 
-                description="Gestión de productos y servicios ofrecidos" 
+                description="Gestión de todos los servicios ofrecidos" 
                 columns={columns} 
                 data={products}
                 addLabel="Nuevo Servicio"
@@ -4025,7 +4263,21 @@ const GlobalTasksView = () => {
         ) },
         { header: 'Cliente', accessor: 'clientName', render: (r: any) => <span className={r.status === 'Finalizada' ? 'text-gray-400' : 'text-gray-600'}>{r.clientName}</span> },
         
-        { header: 'Responsable', accessor: 'assignee', render: (r: any) => <span className={`flex items-center gap-1.5 ${r.status === 'Finalizada' ? 'text-gray-400' : 'text-gray-600'}`}><User size={14} className={r.status === 'Finalizada' ? 'text-gray-300' : 'text-gray-400'}/> {r.assignee}</span> },
+        { header: 'Responsable', accessor: 'assignee', render: (r: any) => (
+            <div className="flex flex-col">
+                <span className={`flex items-center gap-1.5 ${r.status === 'Finalizada' ? 'text-gray-400' : 'text-gray-900 font-semibold'}`}>
+                    {r.assigneePhoto ? (
+                        <img src={r.assigneePhoto} referrerPolicy="no-referrer" className={`w-5 h-5 rounded-full object-cover border border-gray-100 ${r.status === 'Finalizada' ? 'opacity-70' : ''}`} alt={r.assignee} />
+                    ) : (
+                        <User size={14} className={r.status === 'Finalizada' ? 'text-gray-300' : 'text-gray-400'}/> 
+                    )}
+                    {r.assignee}
+                </span>
+                {r.assigneeEmail && (
+                    <span className={`text-[11px] text-gray-400 font-normal truncate max-w-[180px] ${r.assigneePhoto ? 'pl-[26px]' : 'pl-5'}`}>{r.assigneeEmail}</span>
+                )}
+            </div>
+        ) },
         { header: 'Prioridad', accessor: 'priority', render: (r: any) => (
             <div className={r.status === 'Finalizada' ? 'opacity-50' : ''}>
                 <Badge type={r.priority === 'Alta' ? 'danger' : r.priority === 'Media' ? 'warning' : 'info'}>{r.priority}</Badge>
@@ -4246,7 +4498,7 @@ const SettingsView = () => {
     const [fullName, setFullName] = useState(profile.name || '');
     const [dob, setDob] = useState('7 July 2002');
     const [gender, setGender] = useState<'Male' | 'Female'>('Male');
-    const [mobile, setMobile] = useState('+62 821 1234 1234');
+    const [mobile, setMobile] = useState(profile.telefono || '+506 ');
     const [email, setEmail] = useState(profile.email || '');
     const [weight, setWeight] = useState('64');
     const [height, setHeight] = useState('175,5');
@@ -4323,6 +4575,7 @@ const SettingsView = () => {
     const [editingUser, setEditingUser] = useState<any | null>(null);
     const [userFormName, setUserFormName] = useState('');
     const [userFormEmail, setUserFormEmail] = useState('');
+    const [userFormTelefono, setUserFormTelefono] = useState('');
     const [userFormRole, setUserFormRole] = useState('Usuario');
     const [userFormStatus, setUserFormStatus] = useState('Activo');
     const [userFormPhoto, setUserFormPhoto] = useState('');
@@ -4356,6 +4609,7 @@ const SettingsView = () => {
 
             setUserFormName('');
             setUserFormEmail('');
+            setUserFormTelefono('');
             setUserFormRole('Usuario');
             setUserFormStatus('Activo');
             setUserFormPhoto('');
@@ -4376,6 +4630,7 @@ const SettingsView = () => {
         setIsAddingUser(false);
         setUserFormName(userToEdit.name);
         setUserFormEmail(userToEdit.email);
+        setUserFormTelefono(userToEdit.telefono || '');
         setUserFormRole(userToEdit.role);
         setUserFormStatus(userToEdit.status);
         setUserFormPhoto(userToEdit.photo || '');
@@ -4419,6 +4674,7 @@ const SettingsView = () => {
     useEffect(() => {
         setFullName(profile.name || '');
         setEmail(profile.email || '');
+        setMobile(profile.telefono || '+506 ');
         setTempPhoto(profile.photo || '');
     }, [profile]);
 
@@ -4455,6 +4711,7 @@ const SettingsView = () => {
     const hasProfileChanged = 
         (fullName.trim() !== (profile.name || '').trim()) || 
         (email.trim() !== (profile.email || '').trim()) || 
+        (mobile.trim() !== (profile.telefono || '+506 ').trim()) ||
         (tempPhoto !== (profile.photo || ''));
 
     const hasErpChanged = 
@@ -4471,11 +4728,12 @@ const SettingsView = () => {
                 ...profile,
                 name: fullName,
                 email: email,
+                telefono: mobile,
                 photo: tempPhoto
             });
             setSystemUsers((prev: any[]) => prev.map(u => 
                 (u.email === profile.email || u.id === currentUser?.id) 
-                ? { ...u, name: fullName, photo: tempPhoto } 
+                ? { ...u, name: fullName, photo: tempPhoto, telefono: mobile } 
                 : u
             ));
             setUnsavedChangesGuard(null);
@@ -4512,6 +4770,7 @@ const SettingsView = () => {
     const handleCancelEdit = () => {
         setFullName(profile.name || '');
         setEmail(profile.email || '');
+        setMobile(profile.telefono || '+506 ');
         setTempPhoto(profile.photo || '');
         setErpName(business.name || '');
         setErpLogo(business.logo || '');
@@ -4533,7 +4792,7 @@ const SettingsView = () => {
         } else {
             setUnsavedChangesGuard(null);
         }
-    }, [fullName, email, tempPhoto, erpName, erpLogo, profile, business, hasUnsavedChanges, hasProfileChanged, hasErpChanged]);
+    }, [fullName, email, mobile, tempPhoto, erpName, erpLogo, profile, business, hasUnsavedChanges, hasProfileChanged, hasErpChanged]);
 
     useEffect(() => {
         return () => {
@@ -4699,6 +4958,20 @@ const SettingsView = () => {
                                         />
                                         <div className="text-[13px] text-gray-400 mt-2">Usado para iniciar sesión en tu cuenta</div>
                                     </div>
+                                    <div className="w-full mt-4">
+                                        <label className="block text-[14px] font-medium text-gray-900 mb-2">Teléfono</label>
+                                        <input 
+                                            type="text" 
+                                            value={mobile} 
+                                            disabled={isTourMode}
+                                            onChange={(e) => {
+                                                if (isTourMode) return;
+                                                setMobile(e.target.value);
+                                            }}
+                                            placeholder="+506 8888 8888"
+                                            className={`w-full px-4 py-2.5 border border-gray-200 rounded-xl text-[14px] text-gray-900 focus:outline-none transition-all ${isTourMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white focus:ring-2 focus:ring-[#8B5CF6]/20 focus:border-[#8B5CF6]'}`} 
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -4738,6 +5011,7 @@ const SettingsView = () => {
                                                 <div className="space-y-1">
                                                     <h5 className="text-[15px] font-medium text-gray-900">{userFormName}</h5>
                                                     <p className="text-[13px] text-gray-500">{userFormEmail}</p>
+                                                    <p className="text-[13px] text-gray-500">{userFormTelefono}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -4803,14 +5077,15 @@ const SettingsView = () => {
                                         </div>
                                     </form>
                                 ) : (
-                                    <div className="border border-gray-200 rounded-[16px] overflow-hidden bg-white shadow-sm">
-                                        <table className="w-full text-left border-collapse">
+                                    <div className="border border-gray-200 rounded-[16px] overflow-x-auto bg-white shadow-sm">
+                                        <table className="w-full text-left border-collapse min-w-[700px]">
                                             <thead>
                                                 <tr className="border-b border-gray-200 bg-[#FAFAFA]">
-                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500 w-[50px]">Estado</th>
-                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500">Nombre</th>
-                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500">Correo</th>
-                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500">Rol</th>
+                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500 whitespace-nowrap">Estado</th>
+                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500 whitespace-nowrap">Nombre</th>
+                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500 whitespace-nowrap">Correo</th>
+                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500 whitespace-nowrap">Teléfono</th>
+                                                    <th className="py-3.5 px-5 text-[12px] font-medium text-gray-500 whitespace-nowrap">Rol</th>
                                                     
                                                 </tr>
                                             </thead>
@@ -4819,7 +5094,7 @@ const SettingsView = () => {
                                                     const isMe = u.id === currentUser?.id;
                                                     return (
                                                     <tr key={i} className={`border-b border-gray-100 last:border-b-0 transition-colors ${isMe ? 'bg-indigo-50/50' : 'hover:bg-gray-50/50'}`}>
-                                                        <td className="py-4 px-5">
+                                                        <td className="py-4 px-5 whitespace-nowrap">
                                                             <div className="flex items-center gap-2">
                                                                 <div className={`w-2.5 h-2.5 rounded-full ${onlineUsers.includes(u.id) ? 'bg-[#10B981]' : 'bg-gray-300'}`}></div>
                                                                 <span className="text-[12px] font-medium text-gray-500">
@@ -4827,9 +5102,9 @@ const SettingsView = () => {
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        <td className="py-4 px-5">
+                                                        <td className="py-4 px-5 whitespace-nowrap">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[12px] font-medium text-gray-600 overflow-hidden border border-gray-200">
+                                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[12px] font-medium text-gray-600 overflow-hidden border border-gray-200 shrink-0">
                                                                     {u.photo ? <img src={u.photo} className="w-full h-full object-cover" /> : u.name.charAt(0).toUpperCase()}
                                                                 </div>
                                                                 <span className="text-[14px] font-medium text-gray-900">
@@ -4837,10 +5112,13 @@ const SettingsView = () => {
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        <td className="py-4 px-5 text-[14px] text-gray-500">
-                                                            {isMe ? u.email : ''}
+                                                        <td className="py-4 px-5 text-[14px] text-gray-500 whitespace-nowrap">
+                                                            {(isMe || profile.role === 'admin') ? (u.email || <span className="text-gray-400 italic text-[12px]" title="El usuario debe iniciar sesión para sincronizar su correo desde Supabase Auth">Pendiente de sincronizar</span>) : <span className="text-gray-400 italic">Oculto</span>}
                                                         </td>
-                                                        <td className="py-4 px-5">
+                                                        <td className="py-4 px-5 text-[14px] text-gray-500 whitespace-nowrap">
+                                                            {u.telefono || '-'}
+                                                        </td>
+                                                        <td className="py-4 px-5 whitespace-nowrap">
                                                             <RoleBadge role={u.role} />
                                                         </td>
                                                         
@@ -5319,16 +5597,10 @@ const AppLayout = () => {
                             alert('Por favor, escribe el nombre del cliente para continuar.');
                             return;
                         }
-                    } else if (stepId === 'clients-add-practice-company') {
-                        const companyEl = document.querySelector('#tour-client-company') as HTMLInputElement;
-                        if (!companyEl?.value.trim()) {
-                            alert('Por favor, escribe el nombre de la empresa para continuar.');
-                            return;
-                        }
                     } else if (stepId === 'clients-add-practice-select-product') {
                         const selectEl = document.querySelector('#tour-client-service-select') as HTMLSelectElement;
                         if (!selectEl || !selectEl.value || selectEl.value === '') {
-                            alert('Por favor, selecciona un producto o servicio para continuar.');
+                            alert('Por favor, selecciona un servicio para continuar.');
                             return;
                         }
                     } else if (stepId === 'products-add-practice-name') {
@@ -5545,8 +5817,8 @@ const AppLayout = () => {
 
         tour.addStep({
             id: 'dashboard-products',
-            title: '📦 Portafolio de Servicios',
-            text: '¡Tus soluciones comerciales! 🏷️ Te muestra de un vistazo cuántos servicios y planes tienes listos para ofrecer en tu catálogo.',
+            title: '📦 Catálogo de Servicios',
+            text: '¡Tus soluciones comerciales! 🏷️ Te muestra de un vistazo cuántos servicios tienes listos para ofrecer en tu catálogo.',
             attachTo: { element: '#tour-stat-products', on: 'bottom' },
             buttons,
             beforeShowPromise: () => ensureElement('#tour-stat-products', 'dashboard')
@@ -5636,19 +5908,9 @@ const AppLayout = () => {
         });
 
         tour.addStep({
-            id: 'clients-add-practice-company',
-            title: '🏢 Empresa o Negocio',
-            text: '¡Eso es! 🏢 Escribe el nombre de su empresa para mantener a tus clientes perfectamente identificados y profesionales.',
-            attachTo: { element: '#tour-client-company', on: 'bottom' },
-            buttons: nextOnlyButtons,
-            cancelIcon: { enabled: false },
-            beforeShowPromise: () => ensureElement('#tour-client-company', 'clients')
-        });
-
-        tour.addStep({
             id: 'clients-add-practice-add-service',
             title: '⚡ Asignar un Servicio',
-            text: '¡No lo dejemos sin servicio! 📦 Presiona <b>Añadir Servicio</b> para vincularle uno de los planes comerciales de tu catálogo.',
+            text: '¡No lo dejemos sin servicio! 📦 Presiona <b>Añadir Servicio</b> para vincularle uno de los servicios comerciales de tu catálogo.',
             attachTo: { element: '#tour-client-add-service-btn', on: 'bottom' },
             buttons: [],
             cancelIcon: { enabled: false },
@@ -5658,7 +5920,7 @@ const AppLayout = () => {
 
         tour.addStep({
             id: 'clients-add-practice-select-product',
-            title: '📦 Selecciona el Plan',
+            title: '📦 Selecciona el Servicio',
             text: 'Despliega esta lista y escoge un servicio de prueba. 💡 ¡Observa cómo calculo las tarifas y cobros automáticamente!',
             attachTo: { element: '#tour-client-service-select', on: 'bottom' },
             buttons: nextOnlyButtons,
@@ -5923,7 +6185,7 @@ const AppLayout = () => {
         tour.addStep({
             id: 'products-grid',
             title: '📋 Catálogo Comercial',
-            text: '¡Tu vitrina de soluciones! Aquí gestionas tus productos o servicios, sus precios base y descripciones.',
+            text: '¡Tu vitrina de soluciones! Aquí gestionas tus servicios, sus precios base y descripciones.',
             buttons,
             beforeShowPromise: () => ensureElement('#tour-products-grid', 'products')
         });
