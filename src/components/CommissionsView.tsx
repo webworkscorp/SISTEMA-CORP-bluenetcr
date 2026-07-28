@@ -193,6 +193,7 @@ export const CommissionsView: React.FC<CommissionsViewProps> = ({
                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
+                        autoComplete="off"
                         value={searchTerm}
                         disabled={isTourMode}
                         onChange={(e) => {

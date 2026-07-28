@@ -678,7 +678,7 @@ export const Login = ({ onAuthSuccess, isInviteFlow, isRecoveryFlow, inviteUser 
 
                     {/* Right Panel (Form) */}
                     <div className="right-panel">
-                        <form id="authForm" onSubmit={(e) => {
+                        <form id="authForm" autoComplete="off" onSubmit={(e) => {
                             handleLogin(e);
                         }}>
                             {error && (
@@ -767,6 +767,7 @@ export const Login = ({ onAuthSuccess, isInviteFlow, isRecoveryFlow, inviteUser 
                                             <input 
                                                 type="text" 
                                                 id="username" 
+                                                autoComplete="off"
                                                 className="form-control" 
                                                 placeholder="Ej. Juan Pérez" 
                                                 value={username}
@@ -782,6 +783,7 @@ export const Login = ({ onAuthSuccess, isInviteFlow, isRecoveryFlow, inviteUser 
                                             <input 
                                                 type="email" 
                                                 id="email" 
+                                                autoComplete="off"
                                                 className="form-control" 
                                                 placeholder="correo@ejemplo.com" 
                                                 value={email}
@@ -800,6 +802,7 @@ export const Login = ({ onAuthSuccess, isInviteFlow, isRecoveryFlow, inviteUser 
                                         <input 
                                             type={showPassword ? "text" : "password"} 
                                             id="password" 
+                                            autoComplete="new-password"
                                             className="form-control" 
                                             placeholder="••••••••••••" 
                                             value={password}
@@ -824,6 +827,7 @@ export const Login = ({ onAuthSuccess, isInviteFlow, isRecoveryFlow, inviteUser 
                                             <input 
                                                 type={showConfirmPassword ? "text" : "password"} 
                                                 id="confirmPassword" 
+                                                autoComplete="new-password"
                                                 className="form-control" 
                                                 placeholder="••••••••••••" 
                                                 value={confirmPassword}

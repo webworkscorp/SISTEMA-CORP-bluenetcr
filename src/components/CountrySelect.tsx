@@ -95,6 +95,7 @@ export const CountrySelect: React.FC<CountrySelectProps> = ({
               <input
                 ref={searchInputRef}
                 type="text"
+                autoComplete="off"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar país o gentilicio..."
@@ -129,19 +130,6 @@ export const CountrySelect: React.FC<CountrySelectProps> = ({
             ) : (
               <div className="p-3 text-center text-gray-400 text-xs">
                 No se encontraron países.
-                {search.trim() && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChange(search.trim());
-                      setIsOpen(false);
-                      setSearch('');
-                    }}
-                    className="block mx-auto mt-2 text-[#488fcc] font-semibold hover:underline"
-                  >
-                    Usar "{search.trim()}"
-                  </button>
-                )}
               </div>
             )}
           </div>

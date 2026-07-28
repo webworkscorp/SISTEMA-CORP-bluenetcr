@@ -1973,8 +1973,8 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                 name: '',
                 company: '',
                 idNumber: '',
-                email: isTourMode ? 'practica@bluenet.com' : '',
-                phone: isTourMode ? '+1 (555) 0199' : '',
+                email: '',
+                phone: '',
                 tipoCliente: 'Persona Física',
                 cedulaNumero: '',
                 nacionalidad: '',
@@ -2092,7 +2092,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                         <X size={20} />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                <form autoComplete="off" onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
                     
                     {/* Selector de Tipo de Cliente */}
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
@@ -2133,15 +2133,15 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     {formData.tipoCliente === 'Persona Jurídica' ? 'Razón Social / Nombre Comercial' : 'Nombre Completo'}
                                 </label>
-                                <input id="tour-client-name" required type="text" value={formData.name} disabled={isTourMode && currentTourStepId !== 'clients-add-practice-name'} onChange={e => setFormData({...formData, name: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && currentTourStepId !== 'clients-add-practice-name' ? 'bg-gray-50' : ''}`} />
+                                <input id="tour-client-name" autoComplete="off" required type="text" value={formData.name} disabled={isTourMode && currentTourStepId !== 'clients-add-practice-name'} onChange={e => setFormData({...formData, name: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && currentTourStepId !== 'clients-add-practice-name' ? 'bg-gray-50' : ''}`} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-                                <input id="tour-client-email" required type="email" disabled={isTourMode && !initialData} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
+                                <input id="tour-client-email" autoComplete="off" required type="email" disabled={isTourMode && !initialData} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Número Telefónico</label>
-                                <input id="tour-client-phone" type="text" disabled={isTourMode && !initialData} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
+                                <input id="tour-client-phone" autoComplete="off" type="text" disabled={isTourMode && !initialData} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm ${isTourMode && !initialData ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`} />
                             </div>
 
                             {/* Campos condicionales para Persona Física */}
@@ -2149,7 +2149,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                 <>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cédula / ID</label>
-                                        <input type="text" placeholder="Ej: 1-1234-5678" value={formData.cedulaNumero} onChange={e => setFormData({...formData, cedulaNumero: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <input type="text" autoComplete="off" placeholder="Ej: 1-1234-5678" value={formData.cedulaNumero} onChange={e => setFormData({...formData, cedulaNumero: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Cédula Adjunta (Foto / PDF)</label>
@@ -2198,11 +2198,11 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Profesión u Oficio</label>
-                                        <input type="text" placeholder="Ej: Abogado, Ingeniero..." value={formData.profesionOficio} onChange={e => setFormData({...formData, profesionOficio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <input type="text" autoComplete="off" placeholder="Ej: Abogado, Ingeniero..." value={formData.profesionOficio} onChange={e => setFormData({...formData, profesionOficio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Domicilio</label>
-                                        <input type="text" placeholder="Dirección física completa" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <input type="text" autoComplete="off" placeholder="Dirección física completa" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                 </>
                             ) : (
@@ -2210,7 +2210,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                 <>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Personería Jurídica (Cédula Jurídica / Número)</label>
-                                        <input type="text" placeholder="Ej: 3-101-123456" value={formData.personeriaJuridica} onChange={e => setFormData({...formData, personeriaJuridica: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <input type="text" autoComplete="off" placeholder="Ej: 3-101-123456" value={formData.personeriaJuridica} onChange={e => setFormData({...formData, personeriaJuridica: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Documento de Personería (Archivo)</label>
@@ -2244,19 +2244,19 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Representante Legal</label>
-                                        <input type="text" placeholder="Nombre completo del apoderado" value={formData.representanteLegal} onChange={e => setFormData({...formData, representanteLegal: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <input type="text" autoComplete="off" placeholder="Nombre completo del apoderado" value={formData.representanteLegal} onChange={e => setFormData({...formData, representanteLegal: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Actividad Económica</label>
-                                        <input type="text" placeholder="Ej: Comercio, Servicios..." value={formData.actividadEconomica} onChange={e => setFormData({...formData, actividadEconomica: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <input type="text" autoComplete="off" placeholder="Ej: Comercio, Servicios..." value={formData.actividadEconomica} onChange={e => setFormData({...formData, actividadEconomica: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Domicilio de la Sociedad</label>
-                                        <input type="text" placeholder="Dirección física de la empresa" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <input type="text" autoComplete="off" placeholder="Dirección física de la empresa" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Composición Societaria / Beneficiarios Finales</label>
-                                        <textarea rows={2} placeholder="Accionistas principales, porcentajes o beneficiarios finales..." value={formData.composicionSocietaria} onChange={e => setFormData({...formData, composicionSocietaria: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                        <textarea autoComplete="off" rows={2} placeholder="Accionistas principales, porcentajes o beneficiarios finales..." value={formData.composicionSocietaria} onChange={e => setFormData({...formData, composicionSocietaria: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                 </>
                             )}
@@ -2282,7 +2282,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-gray-700 mb-1">Observaciones / Notas de Debida Diligencia</label>
-                            <textarea rows={2} placeholder="Notas del oficial de cumplimiento, hallazgos o resumen..." value={formData.debidaDiligenciaNotas} onChange={e => setFormData({...formData, debidaDiligenciaNotas: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white" />
+                            <textarea autoComplete="off" rows={2} placeholder="Notas del oficial de cumplimiento, hallazgos o resumen..." value={formData.debidaDiligenciaNotas} onChange={e => setFormData({...formData, debidaDiligenciaNotas: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white" />
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-gray-700 mb-1">Documento de Respaldo AML (PDF / Imagen)</label>
@@ -2337,11 +2337,11 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Datos Bancarios para Liquidación/Devoluciones</label>
-                                <input type="text" placeholder="IBAN, Banco, Cuenta o SINPE" value={formData.datosBancarios} onChange={e => setFormData({...formData, datosBancarios: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                <input type="text" autoComplete="off" placeholder="IBAN, Banco, Cuenta o SINPE" value={formData.datosBancarios} onChange={e => setFormData({...formData, datosBancarios: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Domicilio Contractual para Notificaciones</label>
-                                <input type="text" placeholder="Dirección para recibir notificaciones legales..." value={formData.domicilioContractual} onChange={e => setFormData({...formData, domicilioContractual: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                                <input type="text" autoComplete="off" placeholder="Dirección para recibir notificaciones legales..." value={formData.domicilioContractual} onChange={e => setFormData({...formData, domicilioContractual: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                             </div>
                         </div>
                     </div>
@@ -2353,7 +2353,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                         </h4>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción de Activos y/o Montos Custodiados</label>
-                            <textarea rows={3} placeholder="Detalle los fondos, bienes inmuebles, acciones u otros activos bajo custodia o administración..." value={formData.activosAdministrados} onChange={e => setFormData({...formData, activosAdministrados: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                            <textarea autoComplete="off" rows={3} placeholder="Detalle los fondos, bienes inmuebles, acciones u otros activos bajo custodia o administración..." value={formData.activosAdministrados} onChange={e => setFormData({...formData, activosAdministrados: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                         </div>
                     </div>
 
@@ -2454,7 +2454,7 @@ const UploadFormModal = ({ isOpen, onClose, onSubmit, initialFiles = [] }: any) 
                     <h3 className="text-xl font-semibold text-gray-900">Subir Archivos</h3>
                     <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"><X size={20} /></button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6">
+                <form autoComplete="off" onSubmit={handleSubmit} className="p-6">
                     <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                         {files.map((file, i) => (
                             <div key={i} className="flex gap-4 items-start bg-gray-50 p-4 rounded-xl">
@@ -2465,6 +2465,7 @@ const UploadFormModal = ({ isOpen, onClose, onSubmit, initialFiles = [] }: any) 
                                     <input 
                                         required 
                                         type="text" 
+                                        autoComplete="off"
                                         value={file.customName} 
                                         onChange={e => handleNameChange(i, e.target.value)} 
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent bg-white"
@@ -2680,7 +2681,7 @@ const TaskFormModal = ({ isOpen, onClose, onSubmit, clientId = '', initialData =
                         <X size={18} />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6">
+                <form autoComplete="off" onSubmit={handleSubmit} className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-1">
                         
                         {/* Columna Izquierda: Detalles */}
@@ -2698,11 +2699,11 @@ const TaskFormModal = ({ isOpen, onClose, onSubmit, clientId = '', initialData =
                             )}
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Título de la Tarea</label>
-                                <input id="tour-task-name" required type="text" placeholder="Ej. Recopilar firmas de contrato" value={formData.name} disabled={isTourMode && currentTourStepId !== 'task-form-name'} onChange={e => setFormData({...formData, name: e.target.value})} className={`w-full px-3 py-2 border border-gray-250 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-xs font-medium placeholder-gray-400 ${isTourMode && currentTourStepId !== 'task-form-name' ? 'bg-gray-50' : ''}`} />
+                                <input id="tour-task-name" autoComplete="off" required type="text" placeholder="Ej. Recopilar firmas de contrato" value={formData.name} disabled={isTourMode && currentTourStepId !== 'task-form-name'} onChange={e => setFormData({...formData, name: e.target.value})} className={`w-full px-3 py-2 border border-gray-250 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-xs font-medium placeholder-gray-400 ${isTourMode && currentTourStepId !== 'task-form-name' ? 'bg-gray-50' : ''}`} />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Descripción</label>
-                                <textarea id="tour-task-desc" placeholder="Describe el objetivo de esta tarea..." rows={3} value={formData.description} disabled={isTourMode && currentTourStepId !== 'task-form-desc'} onChange={e => setFormData({...formData, description: e.target.value})} className={`w-full px-3 py-2 border border-gray-250 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-xs font-medium placeholder-gray-400 ${isTourMode && currentTourStepId !== 'task-form-desc' ? 'bg-gray-50' : ''}`}></textarea>
+                                <textarea id="tour-task-desc" autoComplete="off" placeholder="Describe el objetivo de esta tarea..." rows={3} value={formData.description} disabled={isTourMode && currentTourStepId !== 'task-form-desc'} onChange={e => setFormData({...formData, description: e.target.value})} className={`w-full px-3 py-2 border border-gray-250 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-xs font-medium placeholder-gray-400 ${isTourMode && currentTourStepId !== 'task-form-desc' ? 'bg-gray-50' : ''}`}></textarea>
                             </div>
 
                             <div>
@@ -3410,6 +3411,7 @@ const ClientsListView = () => {
                         <input 
                             id="tour-clients-search-input"
                             type="text" 
+                            autoComplete="off"
                             placeholder="Buscar clientes..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -4491,11 +4493,12 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                         <X size={20} />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+                <form autoComplete="off" onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Servicio</label>
                         <input
                             id="tour-product-name"
+                            autoComplete="off"
                             required
                             type="text"
                             value={formData.name}
@@ -4509,6 +4512,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                         <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                         <textarea
                             id="tour-product-description"
+                            autoComplete="off"
                             rows={3}
                             value={formData.description}
                             disabled={isTourMode && currentTourStepId !== 'products-add-practice-desc'}
@@ -4522,6 +4526,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                         <label className="block text-sm font-medium text-gray-700 mb-1">Precio Base ($)</label>
                         <input
                             id="tour-product-price"
+                            autoComplete="off"
                             required
                             type="number"
                             min="0"
@@ -4560,6 +4565,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                                 <div className="relative">
                                     <input
                                         type="number"
+                                        autoComplete="off"
                                         min="0"
                                         max="100"
                                         step="any"
@@ -5466,6 +5472,7 @@ const SettingsView = () => {
                                         <label className="block text-[14px] font-medium text-gray-900 mb-2">Nombre</label>
                                         <input 
                                             type="text" 
+                                            autoComplete="off"
                                             value={fullName.split(' ')[0] || ''} 
                                             disabled={isTourMode}
                                             onChange={(e) => {
@@ -5481,6 +5488,7 @@ const SettingsView = () => {
                                         <label className="block text-[14px] font-medium text-gray-900 mb-2">Apellidos</label>
                                         <input 
                                             type="text" 
+                                            autoComplete="off"
                                             value={fullName.split(' ').slice(1).join(' ') || ''} 
                                             disabled={isTourMode}
                                             onChange={(e) => {
@@ -5500,6 +5508,7 @@ const SettingsView = () => {
                                         <label className="block text-[14px] font-medium text-gray-900 mb-2">Correo Electrónico</label>
                                         <input 
                                             type="email" 
+                                            autoComplete="off"
                                             value={email} 
                                             readOnly 
                                             className="w-full px-4 py-2.5 bg-[#FAFAFA] border border-gray-200 rounded-xl text-[14px] text-gray-600 focus:outline-none transition-all cursor-not-allowed" 
@@ -5510,6 +5519,7 @@ const SettingsView = () => {
                                         <label className="block text-[14px] font-medium text-gray-900 mb-2">Teléfono</label>
                                         <input 
                                             type="text" 
+                                            autoComplete="off"
                                             value={mobile} 
                                             disabled={isTourMode}
                                             onChange={(e) => {
@@ -5528,7 +5538,7 @@ const SettingsView = () => {
                         {activeHighlight === 'Usuarios' && (
                             <div id="tour-settings-users-table" className="max-w-4xl">
                                 {editingUser ? (
-                                    <form onSubmit={handleAddOrEditUser} className="space-y-6">
+                                    <form autoComplete="off" onSubmit={handleAddOrEditUser} className="space-y-6">
                                         <div className="flex justify-between items-center pb-6 border-b border-gray-200">
                                             <h4 className="text-[18px] font-semibold text-gray-900">
                                                 Editar Rol de Usuario

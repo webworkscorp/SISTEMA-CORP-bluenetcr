@@ -154,7 +154,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form autoComplete="off" onSubmit={handleSubmit} className="p-6 space-y-5">
                     {errorMsg && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
                             {errorMsg}
@@ -191,6 +191,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                         </label>
                         <input
                             type="text"
+                            autoComplete="off"
                             value={concepto}
                             onChange={(e) => setConcepto(e.target.value)}
                             placeholder="Ej. Comisión de constitución, Administración mensual"
@@ -242,6 +243,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
                                 <input
                                     type="number"
+                                    autoComplete="off"
                                     step="0.01"
                                     min="0"
                                     value={montoFijo}
@@ -261,6 +263,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                                 <div className="relative">
                                     <input
                                         type="number"
+                                        autoComplete="off"
                                         step="0.01"
                                         min="0"
                                         max="100"
@@ -282,6 +285,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
                                     <input
                                         type="number"
+                                        autoComplete="off"
                                         step="0.01"
                                         min="0"
                                         value={montoAdministrado}
