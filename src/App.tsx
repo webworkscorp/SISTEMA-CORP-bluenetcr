@@ -989,7 +989,10 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
             calidad_actua: item.calidadActua || null,
             datos_bancarios: item.datosBancarios || null,
             domicilio_contractual: item.domicilioContractual || null,
-            activos_administrados: item.activosAdministrados || null
+            activos_administrados: item.activosAdministrados || null,
+            personeria_url: item.personeria_url || null,
+            cedula_url: item.cedula_url || null,
+            debida_diligencia_url: item.debida_diligencia_url || null
         };
 
         let res = await supabase.from('clientes').insert(fullPayload).select().single();
@@ -1940,6 +1943,8 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
         status: 'Activo'
     });
 
+    const [assets, setAssets] = useState<Array<{ detalle: string; monto: string }>>([]);
+
     useEffect(() => {
         if (initialData) {
             setFormData({
@@ -1968,6 +1973,26 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                 debida_diligencia_url: initialData.debida_diligencia_url || '',
                 services: initialData.services || (initialData.productId ? [{ productId: initialData.productId, amount: initialData.amount }] : [])
             });
+
+            let initialAssets: Array<{ detalle: string; monto: string }> = [];
+            if (initialData.activosAdministrados) {
+                try {
+                    const parsed = JSON.parse(initialData.activosAdministrados);
+                    if (Array.isArray(parsed)) {
+                        initialAssets = parsed.map((item: any) => ({
+                            detalle: item.detalle || '',
+                            monto: item.monto !== undefined && item.monto !== null ? String(item.monto) : ''
+                        }));
+                    } else {
+                        initialAssets = [{ detalle: initialData.activosAdministrados, monto: '' }];
+                    }
+                } catch (e) {
+                    initialAssets = [{ detalle: initialData.activosAdministrados, monto: '' }];
+                }
+            } else {
+                initialAssets = [];
+            }
+            setAssets(initialAssets);
         } else {
             const defaults = {
                 name: '',
@@ -2001,6 +2026,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                 status: 'Activo'
             };
             setFormData(defaults);
+            setAssets([]);
         }
     }, [initialData, isOpen, isTourMode]);
 
@@ -2029,7 +2055,28 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                 tour.next();
             }
         }
-        onSubmit(formData);
+        onSubmit({
+            ...formData,
+            activosAdministrados: JSON.stringify(assets)
+        });
+    };
+
+    const addAsset = () => {
+        setAssets([...assets, { detalle: '', monto: '' }]);
+    };
+
+    const updateAsset = (index: number, field: 'detalle' | 'monto', value: string) => {
+        const newAssets = [...assets];
+        newAssets[index] = {
+            ...newAssets[index],
+            [field]: value
+        };
+        setAssets(newAssets);
+    };
+
+    const removeAsset = (index: number) => {
+        const newAssets = assets.filter((_, idx) => idx !== index);
+        setAssets(newAssets);
     };
 
     const addService = () => {
@@ -2213,34 +2260,15 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                         <input type="text" autoComplete="off" placeholder="Ej: 3-101-123456" value={formData.personeriaJuridica} onChange={e => setFormData({...formData, personeriaJuridica: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Documento de Personería (Archivo)</label>
-                                        {formData.personeria_url && !formData.personeriaFile ? (
-                                            <div className="flex items-center justify-between bg-blue-50 p-2 rounded-lg border border-blue-100 mb-2">
-                                                <button type="button" className="text-xs text-blue-700 hover:underline flex items-center gap-1.5 font-medium" onClick={async () => {
-                                                    try {
-                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(formData.personeria_url, 60);
-                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                                                    } catch(e) {}
-                                                }}>
-                                                    <FileText size={14} /> Ver Personería Actual
-                                                </button>
-                                                <button type="button" onClick={() => setFormData({...formData, personeria_url: ''})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar personería actual">
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        ) : formData.personeriaFile ? (
-                                            <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
-                                                <span className="text-xs text-green-700 flex items-center gap-1.5 font-medium truncate max-w-[200px]">
-                                                    <FileText size={14} /> {formData.personeriaFile.name}
-                                                </span>
-                                                <button type="button" onClick={() => setFormData({...formData, personeriaFile: null})} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Quitar archivo seleccionado">
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        ) : null}
-                                        <input key={formData.personeriaFile ? 'selected' : 'empty'} type="file" accept="image/*,.pdf" onChange={e => {
-                                            if (e.target.files?.[0]) setFormData({...formData, personeriaFile: e.target.files[0]});
-                                        }} className="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                                        <textarea
+                                            autoComplete="off"
+                                            rows={2}
+                                            placeholder="Notas de personería u otras observaciones sobre la sociedad..."
+                                            value={formData.personeria_url}
+                                            onChange={e => setFormData({...formData, personeria_url: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm bg-white"
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Representante Legal</label>
@@ -2347,13 +2375,69 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                     </div>
 
                     {/* Activos Administrados */}
-                    <div>
-                        <h4 className="text-sm font-bold text-gray-900 border-b pb-2 mb-4 flex items-center gap-2">
-                            <Briefcase size={16} className="text-indigo-600" /> Activos Administrados
-                        </h4>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción / Detalle</label>
-                            <textarea autoComplete="off" rows={3} placeholder="Detalle los fondos, bienes inmuebles, acciones u otros activos bajo custodia o administración..." value={formData.activosAdministrados} onChange={e => setFormData({...formData, activosAdministrados: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
+                    <div className="border border-gray-200/80 rounded-2xl p-5 bg-gray-50/50 space-y-4">
+                        <div className="flex justify-between items-center border-b border-gray-200/60 pb-3">
+                            <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                <Briefcase size={16} className="text-indigo-600" /> Activos Administrados
+                            </h4>
+                            <button
+                                type="button"
+                                onClick={addAsset}
+                                className="text-xs flex items-center gap-1 font-semibold text-[#488fcc] hover:text-[#3770a3] transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm"
+                            >
+                                <Plus size={14} /> Añadir Activo
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            {assets.map((asset, index) => (
+                                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative animate-in fade-in duration-150">
+                                    <div className="md:col-span-7">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Detalle del Activo</label>
+                                        <input
+                                            type="text"
+                                            autoComplete="off"
+                                            required
+                                            placeholder="Ej: Cuenta Bancaria, Inmueble, Acciones..."
+                                            value={asset.detalle}
+                                            onChange={e => updateAsset(index, 'detalle', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-xs font-medium placeholder-gray-400 bg-white"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-4">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Monto del Activo ($)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-2.5 text-xs text-gray-400 font-medium">$</span>
+                                            <input
+                                                type="number"
+                                                autoComplete="off"
+                                                min="0"
+                                                step="any"
+                                                required
+                                                placeholder="0.00"
+                                                value={asset.monto}
+                                                onChange={e => updateAsset(index, 'monto', e.target.value)}
+                                                className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-xs font-medium placeholder-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-white"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-1 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeAsset(index)}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100"
+                                            title="Eliminar activo"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {assets.length === 0 && (
+                                <div className="text-center py-6 bg-white rounded-xl border border-dashed border-gray-200 text-gray-400 text-xs font-medium">
+                                    No hay activos registrados. Haga clic en "Añadir Activo" para registrar uno.
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -3808,25 +3892,16 @@ const ClientProfileView = () => {
                                 )}
                             </div>
 
-                            {/* Documentos Adjuntos de Identificación (Consulta) */}
+                            {/* Documentos Adjuntos / Observaciones (Consulta) */}
                             <div className="border-t border-gray-100 pt-4">
-                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 block">Documento Adjunto de Identificación</label>
+                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 block">Identificación / Observaciones</label>
                                 <div>
                                     {client.tipoCliente === 'Persona Jurídica' ? (
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs font-semibold text-gray-700">Personería Jurídica:</span>
-                                            {client.personeria_url ? (
-                                                <button onClick={async () => {
-                                                    try {
-                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(client.personeria_url, 60);
-                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                                                    } catch (e) {}
-                                                }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold border border-blue-200/80 transition-colors">
-                                                    <FileText size={14} /> Ver Documento de Personería
-                                                </button>
-                                            ) : (
-                                                <span className="text-xs text-gray-400 font-normal italic">Sin archivo adjunto</span>
-                                            )}
+                                        <div className="flex flex-col gap-1.5">
+                                            <span className="text-xs font-semibold text-gray-700">Observaciones:</span>
+                                            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-150 whitespace-pre-wrap">
+                                                {client.personeria_url || 'Sin observaciones registradas.'}
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-3">
@@ -3851,18 +3926,42 @@ const ClientProfileView = () => {
 
                         {/* Bloque 2: Debida Diligencia AML/CFT/CFP */}
                         <Card className="space-y-4 border-l-4 border-l-emerald-500 animate-stagger" style={{ animationDelay: '350ms' }}>
-                            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-3 gap-3">
                                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                     <ShieldCheck size={18} className="text-emerald-600" /> Debida Diligencia AML / CFT / CFP
                                 </h3>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
-                                    client.debidaDiligenciaCompletada
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                                }`}>
-                                    {client.debidaDiligenciaCompletada ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
-                                    {client.debidaDiligenciaCompletada ? 'Completada' : 'Pendiente / En Revisión'}
-                                </span>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {/* Checkbox interactivo "desde afuera" */}
+                                    <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-emerald-50/50 hover:bg-emerald-50 active:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-100 transition-all shadow-sm">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!client.debidaDiligenciaCompletada}
+                                            onChange={async (e) => {
+                                                const checked = e.target.checked;
+                                                const updatedClients = clients.map((c: any) => c.id === client.id ? { ...c, debidaDiligenciaCompletada: checked } : c);
+                                                setClients(updatedClients);
+                                                showToast(
+                                                    checked ? 'Debida Diligencia Completada' : 'Debida Diligencia Pendiente',
+                                                    `Se ha actualizado el estado de debida diligencia de ${client.name}.`,
+                                                    'success'
+                                                );
+                                            }}
+                                            className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300 cursor-pointer"
+                                        />
+                                        <span className="text-xs font-bold text-emerald-800">
+                                            {client.debidaDiligenciaCompletada ? 'Marcar como Pendiente' : 'Marcar como Completada'}
+                                        </span>
+                                    </label>
+                                    
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                                        client.debidaDiligenciaCompletada
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                                    }`}>
+                                        {client.debidaDiligenciaCompletada ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+                                        {client.debidaDiligenciaCompletada ? 'Completada' : 'Pendiente / En Revisión'}
+                                    </span>
+                                </div>
                             </div>
 
                             <div>
@@ -3924,10 +4023,79 @@ const ClientProfileView = () => {
                                 <Briefcase size={18} className="text-indigo-600" /> Activos Administrados
                             </h3>
                             <div>
-                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Descripción / Detalle</label>
-                                <div className="mt-2 text-sm text-gray-800 bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap">
-                                    {client.activosAdministrados || 'Sin activos registrados para administración.'}
-                                </div>
+                                {(() => {
+                                    let parsedAssets: Array<{ detalle: string; monto: string | number }> = [];
+                                    let isJson = false;
+                                    if (client.activosAdministrados) {
+                                        try {
+                                            const parsed = JSON.parse(client.activosAdministrados);
+                                            if (Array.isArray(parsed)) {
+                                                parsedAssets = parsed;
+                                                isJson = true;
+                                            }
+                                        } catch (e) {
+                                            // legacy plain text
+                                        }
+                                    }
+
+                                    if (isJson) {
+                                        if (parsedAssets.length === 0) {
+                                            return (
+                                                <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400 text-xs font-medium">
+                                                    Sin activos registrados para administración.
+                                                </div>
+                                            );
+                                        }
+
+                                        const totalAmount = parsedAssets.reduce((sum, item) => {
+                                            const val = parseFloat(String(item.monto || 0));
+                                            return sum + (isNaN(val) ? 0 : val);
+                                        }, 0);
+
+                                        return (
+                                            <div className="space-y-4">
+                                                <div className="overflow-x-auto rounded-xl border border-gray-150">
+                                                    <table className="w-full text-left border-collapse text-xs">
+                                                        <thead>
+                                                            <tr className="bg-gray-50 border-b border-gray-150">
+                                                                <th className="p-3 font-semibold text-gray-600">Detalle del Activo</th>
+                                                                <th className="p-3 font-semibold text-gray-600 text-right">Monto</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                                            {parsedAssets.map((asset, index) => (
+                                                                <tr key={index} className="hover:bg-gray-50/50">
+                                                                    <td className="p-3 font-medium text-gray-800">{asset.detalle || '—'}</td>
+                                                                    <td className="p-3 font-bold text-gray-950 text-right">
+                                                                        {asset.monto !== undefined && asset.monto !== '' ? `$${Number(asset.monto).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                            {totalAmount > 0 && (
+                                                                <tr className="bg-gray-50 font-bold border-t border-gray-200">
+                                                                    <td className="p-3 text-gray-900">Total de Activos</td>
+                                                                    <td className="p-3 text-right text-indigo-700 text-sm">
+                                                                        {`$${totalAmount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Render fallback (original plain text)
+                                    return (
+                                        <div>
+                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Descripción / Detalle</label>
+                                            <div className="mt-2 text-sm text-gray-800 bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap">
+                                                {client.activosAdministrados || 'Sin activos registrados para administración.'}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </Card>
 
