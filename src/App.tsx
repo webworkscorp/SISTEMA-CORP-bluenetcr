@@ -3943,10 +3943,21 @@ const ClientProfileView = () => {
                                             <button
                                                 type="button"
                                                 onClick={async () => {
-                                                    const updatedClients = clients.map((c: any) => c.id === client.id ? { ...c, personeria_url: obsText } : c);
-                                                    setClients(updatedClients);
-                                                    setIsEditingObs(false);
-                                                    showToast('Observaciones guardadas', 'Se actualizaron las observaciones del cliente.', 'success');
+                                                    try {
+                                                        const { error } = await supabase
+                                                            .from('clientes')
+                                                            .update({ personeria_url: obsText })
+                                                            .eq('id', client.id);
+                                                        if (error) throw error;
+
+                                                        const updatedClients = clients.map((c: any) => c.id === client.id ? { ...c, personeria_url: obsText } : c);
+                                                        setClients(updatedClients);
+                                                        setIsEditingObs(false);
+                                                        showToast('Observaciones guardadas', 'Se actualizaron las observaciones del cliente.', 'success');
+                                                    } catch (err: any) {
+                                                        console.error('Error saving observations:', err);
+                                                        showToast('Error al guardar', 'No se pudieron guardar las observaciones: ' + err.message, 'error');
+                                                    }
                                                 }}
                                                 className="px-3 py-1.5 rounded-lg bg-[#488fcc] hover:bg-[#3770a3] text-white text-xs font-bold transition-colors shadow-sm"
                                             >
@@ -3995,13 +4006,24 @@ const ClientProfileView = () => {
                                             checked={!!client.debidaDiligenciaCompletada}
                                             onChange={async (e) => {
                                                 const checked = e.target.checked;
-                                                const updatedClients = clients.map((c: any) => c.id === client.id ? { ...c, debidaDiligenciaCompletada: checked } : c);
-                                                setClients(updatedClients);
-                                                showToast(
-                                                    checked ? 'Debida Diligencia Completada' : 'Debida Diligencia Pendiente',
-                                                    `Se ha actualizado el estado de debida diligencia de ${client.name}.`,
-                                                    'success'
-                                                );
+                                                try {
+                                                    const { error } = await supabase
+                                                        .from('clientes')
+                                                        .update({ debida_diligencia_completada: checked })
+                                                        .eq('id', client.id);
+                                                    if (error) throw error;
+
+                                                    const updatedClients = clients.map((c: any) => c.id === client.id ? { ...c, debidaDiligenciaCompletada: checked } : c);
+                                                    setClients(updatedClients);
+                                                    showToast(
+                                                        checked ? 'Debida Diligencia Completada' : 'Debida Diligencia Pendiente',
+                                                        `Se ha actualizado el estado de debida diligencia de ${client.name}.`,
+                                                        'success'
+                                                    );
+                                                } catch (err: any) {
+                                                    console.error('Error toggling debida diligencia:', err);
+                                                    showToast('Error', 'No se pudo guardar el cambio: ' + err.message, 'error');
+                                                }
                                             }}
                                             className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300 cursor-pointer"
                                         />
