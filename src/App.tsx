@@ -3726,7 +3726,7 @@ const ClientProfileView = () => {
     if (!client) return <div>Client not found.</div>;
 
     const tabs = [
-        { id: 'general', label: 'Aspectos Generales', icon: <User size={16} /> },
+        { id: 'general', label: 'Expediente General', icon: <User size={16} /> },
         { id: 'docs', label: 'Documentos', icon: <FileText size={16} /> },
         { id: 'tasks', label: 'Tareas', icon: <CheckCircle size={16} /> }
     ];
