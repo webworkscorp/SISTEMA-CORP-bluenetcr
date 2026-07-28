@@ -2251,6 +2251,17 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Domicilio</label>
                                         <input type="text" autoComplete="off" placeholder="Dirección física completa" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                                     </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                                        <textarea
+                                            autoComplete="off"
+                                            rows={2}
+                                            placeholder="Notas u observaciones sobre el cliente..."
+                                            value={formData.personeria_url}
+                                            onChange={e => setFormData({...formData, personeria_url: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm bg-white"
+                                        />
+                                    </div>
                                 </>
                             ) : (
                                 /* Campos condicionales para Persona Jurídica */
@@ -3622,6 +3633,8 @@ const ClientProfileView = () => {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [pendingFiles, setPendingFiles] = useState<any[]>([]);
     const [docToDelete, setDocToDelete] = useState<any>(null);
+    const [isEditingObs, setIsEditingObs] = useState(false);
+    const [obsText, setObsText] = useState('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const isAdmin = profile?.role === 'admin';
@@ -3892,35 +3905,79 @@ const ClientProfileView = () => {
                                 )}
                             </div>
 
-                            {/* Documentos Adjuntos / Observaciones (Consulta) */}
-                            <div className="border-t border-gray-100 pt-4">
-                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 block">Identificación / Observaciones</label>
-                                <div>
-                                    {client.tipoCliente === 'Persona Jurídica' ? (
-                                        <div className="flex flex-col gap-1.5">
-                                            <span className="text-xs font-semibold text-gray-700">Observaciones:</span>
-                                            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-150 whitespace-pre-wrap">
-                                                {client.personeria_url || 'Sin observaciones registradas.'}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs font-semibold text-gray-700">Cédula de Identidad:</span>
-                                            {client.cedula_url ? (
-                                                <button onClick={async () => {
-                                                    try {
-                                                        const { data } = await supabase.storage.from('documents').createSignedUrl(client.cedula_url, 60);
-                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                                                    } catch (e) {}
-                                                }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold border border-blue-200/80 transition-colors">
-                                                    <FileText size={14} /> Ver Cédula de Identidad
-                                                </button>
-                                            ) : (
-                                                <span className="text-xs text-gray-400 font-normal italic">Sin archivo adjunto</span>
-                                            )}
-                                        </div>
-                                    )}
+                            {/* Observaciones (Consulta con edición inline) */}
+                            <div className="border-t border-gray-100 pt-5 space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Observaciones</label>
+                                    {!isEditingObs ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setObsText(client.personeria_url || '');
+                                                setIsEditingObs(true);
+                                            }}
+                                            className="text-xs font-semibold text-[#488fcc] hover:text-[#3770a3] transition-colors flex items-center gap-1 bg-blue-50/50 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 shadow-sm"
+                                        >
+                                            <Edit2 size={12} /> Editar Observaciones
+                                        </button>
+                                    ) : null}
                                 </div>
+
+                                {isEditingObs ? (
+                                    <div className="space-y-3">
+                                        <textarea
+                                            value={obsText}
+                                            onChange={(e) => setObsText(e.target.value)}
+                                            rows={3}
+                                            placeholder="Escriba las observaciones o notas aquí..."
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm font-medium bg-white"
+                                        />
+                                        <div className="flex items-center gap-2 justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditingObs(false)}
+                                                className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    const updatedClients = clients.map((c: any) => c.id === client.id ? { ...c, personeria_url: obsText } : c);
+                                                    setClients(updatedClients);
+                                                    setIsEditingObs(false);
+                                                    showToast('Observaciones guardadas', 'Se actualizaron las observaciones del cliente.', 'success');
+                                                }}
+                                                className="px-3 py-1.5 rounded-lg bg-[#488fcc] hover:bg-[#3770a3] text-white text-xs font-bold transition-colors shadow-sm"
+                                            >
+                                                Guardar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap min-h-[50px]">
+                                        {client.personeria_url || <span className="text-gray-400 italic">Sin observaciones registradas.</span>}
+                                    </div>
+                                )}
+
+                                {/* Documento de Cédula Adjunto para Persona Física */}
+                                {client.tipoCliente !== 'Persona Jurídica' && (
+                                    <div className="flex items-center gap-3 pt-3 border-t border-gray-100/60">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Cédula de Identidad:</span>
+                                        {client.cedula_url ? (
+                                            <button onClick={async () => {
+                                                try {
+                                                    const { data } = await supabase.storage.from('documents').createSignedUrl(client.cedula_url, 60);
+                                                    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                                } catch (e) {}
+                                            }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold border border-blue-200/80 transition-colors shadow-sm">
+                                                <FileText size={14} /> Ver Cédula de Identidad
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs text-gray-400 font-normal italic">Sin archivo adjunto</span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
