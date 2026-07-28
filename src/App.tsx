@@ -2352,7 +2352,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                             <Briefcase size={16} className="text-indigo-600" /> Activos Administrados
                         </h4>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción de Activos y/o Montos Custodiados</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción / Detalle</label>
                             <textarea autoComplete="off" rows={3} placeholder="Detalle los fondos, bienes inmuebles, acciones u otros activos bajo custodia o administración..." value={formData.activosAdministrados} onChange={e => setFormData({...formData, activosAdministrados: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent text-sm" />
                         </div>
                     </div>
@@ -3924,7 +3924,7 @@ const ClientProfileView = () => {
                                 <Briefcase size={18} className="text-indigo-600" /> Activos Administrados
                             </h3>
                             <div>
-                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Descripción / Montos Custodiados</label>
+                                <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Descripción / Detalle</label>
                                 <div className="mt-2 text-sm text-gray-800 bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap">
                                     {client.activosAdministrados || 'Sin activos registrados para administración.'}
                                 </div>
