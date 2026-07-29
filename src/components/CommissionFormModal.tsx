@@ -85,7 +85,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
         }
 
         if (tipoCalculo === 'fija' && calcFixed <= 0) {
-            setErrorMsg('Por favor, ingresa un monto fijo mayor a 0.');
+            setErrorMsg('Por favor, ingresa una comisión fija mayor a 0.');
             return;
         }
 
@@ -203,7 +203,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                     {/* Tipo de cálculo */}
                     <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                            Tipo de cálculo
+                            Tipo de comisión
                         </label>
                         <div className="grid grid-cols-2 gap-2.5 p-1 bg-slate-100/70 rounded-xl border border-slate-200/60">
                             <button
@@ -216,7 +216,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                                 }`}
                             >
                                 <DollarSign size={14} />
-                                Monto Fijo
+                                Comisión fija
                             </button>
                             <button
                                 type="button"
@@ -228,7 +228,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                                 }`}
                             >
                                 <Percent size={14} />
-                                Porcentual
+                                Comisión porcentual
                             </button>
                         </div>
                     </div>
@@ -237,7 +237,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                     {tipoCalculo === 'fija' ? (
                         <div>
                             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                                Monto Fijo ($) <span className="text-red-500">*</span>
+                                Comisión fija ($) <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
@@ -312,7 +312,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                                 </span>
                                 <p className="text-xs text-slate-600 mt-0.5">
                                     {tipoCalculo === 'fija' 
-                                        ? 'Cálculo por monto fijo directo' 
+                                        ? 'Cálculo por comisión fija directa' 
                                         : `${calcPct}% de $${calcAdmin.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                     }
                                 </p>

@@ -28,6 +28,13 @@ import { CommissionsView as CommissionsViewComponent } from './components/Commis
 import { CountrySelect } from './components/CountrySelect';
 import { formatCountryWithFlag } from './data/paises';
 
+export const isBluenetClient = (client: any): boolean => {
+    if (!client) return false;
+    const num = (client.number || client.numero_cliente || '').toString().replace('#', '').trim();
+    const name = (client.name || client.nombre || '').toString().toUpperCase();
+    return num === '000' || num === '0' || name === 'BLUENET' || name.includes('BLUENET');
+};
+
 // --- ILUSTRACIONES DE ESTADO VACÍO PERSONALIZADAS POR SECCIÓN ---
 
 // 1. Gráfica de Flujo Financiero
@@ -739,7 +746,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     price: parseFloat(p.precio_base),
                     commissionRate: parseFloat(p.comision_porcentaje || 0),
                     aplicaIva: p.aplica_iva ?? false,
-                    ivaPercentage: p.porcentaje_iva !== undefined && p.porcentaje_iva !== null ? parseFloat(p.porcentaje_iva) : 16,
+                    ivaPercentage: p.porcentaje_iva !== undefined && p.porcentaje_iva !== null ? parseFloat(p.porcentaje_iva) : 13,
                     montoIva: p.monto_iva !== undefined && p.monto_iva !== null ? parseFloat(p.monto_iva) : 0,
                     costoFinal: p.costo_final !== undefined && p.costo_final !== null ? parseFloat(p.costo_final) : parseFloat(p.precio_base || 0),
                     cuotaConstitucion: p.cuota_constitucion ? parseFloat(p.cuota_constitucion) : undefined,
@@ -765,6 +772,77 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 .from('clientes')
                 .select('*, cliente_servicios(*)')
                 .order('fecha_creacion', { ascending: false });
+
+            // Ensure "Cliente Cero" exists in the database as "BLUENET" with "#000"
+            const hasBluenet = clientsData && clientsData.some((c: any) => 
+                c.nombre.toUpperCase() === 'BLUENET' || 
+                c.numero_cliente === '#000' || 
+                c.numero_cliente === '000'
+            );
+            
+            const oldTarget = clientsData && clientsData.find((c: any) => 
+                c.numero_cliente === '#000' || 
+                c.numero_cliente === '000' || 
+                c.nombre.toUpperCase() === 'BLUENET' ||
+                c.numero_cliente === '2 016#' ||
+                c.numero_cliente === '2 016'
+            );
+            
+            if (oldTarget) {
+                try {
+                    await supabase.from('clientes').update({
+                        numero_cliente: '#000',
+                        nombre: 'BLUENET',
+                        empresa: 'BLUENET Trust & Escrow',
+                        correo: 'info@bluenetescrow.com',
+                        telefono: '+506 4000-0000',
+                        tipo_cliente: 'Persona Jurídica',
+                        cedula_numero: '3-102-000000',
+                        nacionalidad: 'Costa Rica',
+                        actividad_economica: 'Servicios de Fideicomiso, Custodia y Escrow',
+                        debida_diligencia_completada: true,
+                        debida_diligencia_notas: 'Cuenta Corporativa Propia de BLUENET para operaciones y registro de información.'
+                    }).eq('id', oldTarget.id);
+                    
+                    const { data: refreshedClients } = await supabase
+                        .from('clientes')
+                        .select('*, cliente_servicios(*)')
+                        .order('fecha_creacion', { ascending: false });
+                    if (refreshedClients) {
+                        clientsData = refreshedClients;
+                    }
+                } catch (updateErr) {
+                    console.error('Error updating BLUENET seed client:', updateErr);
+                }
+            } else if (!hasBluenet) {
+                try {
+                    const { data: newBluenet } = await supabase.from('clientes').insert({
+                        numero_cliente: '#000',
+                        nombre: 'BLUENET',
+                        empresa: 'BLUENET Trust & Escrow',
+                        correo: 'info@bluenetescrow.com',
+                        telefono: '+506 4000-0000',
+                        tipo_cliente: 'Persona Jurídica',
+                        cedula_numero: '3-102-000000',
+                        nacionalidad: 'Costa Rica',
+                        actividad_economica: 'Servicios de Fideicomiso, Custodia y Escrow',
+                        debida_diligencia_completada: true,
+                        debida_diligencia_notas: 'Cuenta Corporativa Propia de BLUENET para operaciones y registro de información.'
+                    }).select().single();
+                    
+                    if (newBluenet) {
+                        const { data: refreshedClients } = await supabase
+                            .from('clientes')
+                            .select('*, cliente_servicios(*)')
+                            .order('fecha_creacion', { ascending: false });
+                        if (refreshedClients) {
+                            clientsData = refreshedClients;
+                        }
+                    }
+                } catch (insertErr) {
+                    console.error('Error seeding BLUENET client:', insertErr);
+                }
+            }
 
             if (clientsData && clientsData.length > 0) {
                 setClients(clientsData.map(c => ({
@@ -2102,7 +2180,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                 } else {
                     const base = Number(prod.price || prod.precio_base || 0);
                     const hasIva = prod.aplicaIva || Number(prod.ivaPercentage || prod.porcentaje_iva || 0) > 0;
-                    const perc = hasIva ? Number(prod.ivaPercentage || prod.porcentaje_iva || 16) : 0;
+                    const perc = hasIva ? Number(prod.ivaPercentage || prod.porcentaje_iva || 13) : 0;
                     realPrice = base + (base * perc) / 100;
                 }
             }
@@ -2485,7 +2563,7 @@ const ClientFormModal = ({ isOpen, onClose, onSubmit, initialData }: any) => {
                                                 const hasIva = prod.aplicaIva || Number(prod.ivaPercentage || prod.porcentaje_iva || 0) > 0;
                                                 return hasIva ? (
                                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
-                                                        Con IVA ({prod.ivaPercentage || prod.porcentaje_iva || 16}%)
+                                                        Con IVA ({prod.ivaPercentage || prod.porcentaje_iva || 13}%)
                                                     </span>
                                                 ) : (
                                                     <span className="text-[10px] font-medium text-gray-400">
@@ -2787,7 +2865,9 @@ const TaskFormModal = ({ isOpen, onClose, onSubmit, clientId = '', initialData =
                                     <select required value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent bg-white text-xs font-semibold">
                                         <option value="">Seleccione un cliente</option>
                                         {clients.map((c: any) => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                            <option key={c.id} value={c.id}>
+                                                {isBluenetClient(c) ? `⭐ ${c.name} (VIP #000)` : c.name}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -3398,7 +3478,19 @@ const DashboardView = () => {
                                         return (
                                             <tr key={client.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors animate-stagger" style={{ animationDelay: `${800 + i * 50}ms` }}>
                                                 <td className="px-4 py-3">
-                                                    <div className="font-medium text-gray-900">{client.name}</div>
+                                                    <div className="font-medium text-gray-900 flex items-center gap-2">
+                                                        {isBluenetClient(client) ? (
+                                                            <>
+                                                                <img src="https://i.imgur.com/4Wc522w.png" alt="BLUENET" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+                                                                <span className="font-bold text-slate-900">{client.name}</span>
+                                                                <span className="bg-slate-900 text-amber-300 font-semibold text-[10px] px-2 py-0.5 rounded-full border border-amber-400/40">
+                                                                    VIP #000
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            client.name
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-600">{client.phone || '-'}</td>
                                                 <td className="px-4 py-3 text-gray-600 truncate max-w-xs" title={productsLabel}>{productsLabel}</td>
@@ -3534,43 +3626,97 @@ const ClientsListView = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredClients.map((client: any, i: number) => (
-                            <Card 
-                                key={client.id} 
-                                className={`group transition-all animate-stagger ${isTourMode ? 'opacity-75 grayscale-[0.2]' : 'cursor-pointer hover:border-[#488fcc]/50'}`} 
-                                style={{ animationDelay: `${100 + i * 50}ms` }} 
-                            >
-                                <div onClick={() => !isTourMode && navigateTo('clientProfile', client.id)}>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-xl font-bold group-hover:bg-[#203e71] group-hover:text-white transition-colors">
-                                            {client.name.charAt(0)}
+                        {filteredClients.map((client: any, i: number) => {
+                            if (isBluenetClient(client)) {
+                                return (
+                                    <div 
+                                        key={client.id} 
+                                        onClick={() => !isTourMode && navigateTo('clientProfile', client.id)}
+                                        className={`bg-slate-900 text-white rounded-2xl p-6 border border-slate-800 hover:border-amber-400/60 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden group animate-stagger ${isTourMode ? 'opacity-75 grayscale-[0.2]' : ''}`}
+                                        style={{ animationDelay: `${100 + i * 50}ms` }}
+                                    >
+                                        {/* Top subtle gradient bar */}
+                                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#203e71] via-[#488fcc] to-amber-400" />
+                                        
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700/80 p-2 flex items-center justify-center shrink-0">
+                                                <img src="https://i.imgur.com/4Wc522w.png" alt="BLUENET" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className="bg-amber-400/10 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                                    Cuenta Corporativa #000
+                                                </span>
+                                                <Badge type="success">Activo</Badge>
+                                            </div>
                                         </div>
-                                        <Badge type={client.status === 'Activo' ? 'success' : 'default'}>{client.status}</Badge>
-                                    </div>
-                                    
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{client.name}</h3>
-                                    <div className="flex flex-col gap-1 mb-4">
-                                        <p className="text-xs text-gray-400 flex items-center gap-2">
-                                            <Calendar size={14} /> {client.dateAdded ? new Date(client.dateAdded).toLocaleDateString() : 'Sin fecha'}
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="space-y-2 text-sm text-gray-600 border-t border-gray-100 pt-4">
-                                        <div className="flex items-center gap-2">
-                                            <Mail size={14} className="text-gray-400" /> {client.email}
+
+                                        <div className="mb-4">
+                                            <h3 className="text-xl font-bold text-white flex items-center gap-2 group-hover:text-amber-300 transition-colors">
+                                                {client.name}
+                                                <ShieldCheck size={18} className="text-amber-400" />
+                                            </h3>
+                                            <p className="text-xs text-slate-300 font-medium">
+                                                {client.company || 'BLUENET Trust & Escrow'} • Matriz Principal
+                                            </p>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Phone size={14} className="text-gray-400" /> {client.phone}
+
+                                        <div className="space-y-2 text-xs text-slate-300 border-t border-slate-800 pt-3 mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <Mail size={13} className="text-amber-400" /> {client.email}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Phone size={13} className="text-amber-400" /> {client.phone || '+506 4000-0000'}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-800/90 hover:bg-slate-800 text-amber-300 font-semibold rounded-xl py-2.5 px-4 flex items-center justify-between text-xs border border-slate-700 transition-all">
+                                            <span className="flex items-center gap-2">
+                                                <Building2 size={14} className="text-amber-400" /> Ver Expediente Corporativo
+                                            </span>
+                                            <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                         </div>
                                     </div>
-                                    
-                                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm font-medium text-[#488fcc]">
-                                        <span>Ver Expediente</span>
-                                        <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                );
+                            }
+
+                            return (
+                                <Card 
+                                    key={client.id} 
+                                    className={`group transition-all animate-stagger ${isTourMode ? 'opacity-75 grayscale-[0.2]' : 'cursor-pointer hover:border-[#488fcc]/50'}`} 
+                                    style={{ animationDelay: `${100 + i * 50}ms` }} 
+                                >
+                                    <div onClick={() => !isTourMode && navigateTo('clientProfile', client.id)}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-xl font-bold group-hover:bg-[#203e71] group-hover:text-white transition-colors">
+                                                {client.name.charAt(0)}
+                                            </div>
+                                            <Badge type={client.status === 'Activo' ? 'success' : 'default'}>{client.status}</Badge>
+                                        </div>
+                                        
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{client.name}</h3>
+                                        <div className="flex flex-col gap-1 mb-4">
+                                            <p className="text-xs text-gray-400 flex items-center gap-2">
+                                                <Calendar size={14} /> {client.dateAdded ? new Date(client.dateAdded).toLocaleDateString() : 'Sin fecha'}
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="space-y-2 text-sm text-gray-600 border-t border-gray-100 pt-4">
+                                            <div className="flex items-center gap-2">
+                                                <Mail size={14} className="text-gray-400" /> {client.email}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Phone size={14} className="text-gray-400" /> {client.phone}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm font-medium text-[#488fcc]">
+                                            <span>Ver Expediente</span>
+                                            <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                        </div>
                                     </div>
-                                </div>
-                            </Card>
-                        ))}
+                                </Card>
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -3755,38 +3901,97 @@ const ClientProfileView = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-stagger" style={{ animationDelay: '100ms' }}>
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">{client.name}</h1>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
-                        <span className="flex items-center gap-1"><Calendar size={16} /> Registrado: {client.dateAdded ? new Date(client.dateAdded).toLocaleDateString() : 'Sin fecha'}</span>
+            {isBluenetClient(client) ? (
+                /* Executive Corporate Premium Header for Bluenet */
+                <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 rounded-2xl border border-slate-800 shadow-xl p-6 md:p-8 text-white mb-6 relative overflow-hidden animate-stagger" style={{ animationDelay: '100ms' }}>
+                    {/* Subtle top gold accent bar */}
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#203e71] via-[#488fcc] to-amber-400" />
+
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-800/90 border border-slate-700/80 p-3 shadow-inner flex items-center justify-center shrink-0">
+                                <img src="https://i.imgur.com/4Wc522w.png" alt="BLUENET" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="bg-amber-400/10 text-amber-300 border border-amber-400/30 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                                        <Building2 size={13} /> Cuenta Corporativa #000
+                                    </span>
+                                    <span className="bg-blue-500/10 text-blue-300 border border-blue-400/30 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
+                                        <ShieldCheck size={13} /> Matriz Principal - Fideicomiso & Escrow
+                                    </span>
+                                </div>
+
+                                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                                    {client.name}
+                                </h1>
+                                <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                                    {client.company || 'BLUENET Trust & Escrow'} • Registro de Operaciones y Custodia
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="tour-client-profile-actions" className="flex gap-2 shrink-0">
+                            <Button 
+                                id="tour-client-edit" 
+                                variant="outline" 
+                                icon={<Edit2 size={16} />} 
+                                onClick={() => setIsEditModalOpen(true)}
+                                disabled={isTourMode}
+                                className={`bg-slate-800 hover:bg-slate-700 text-white border-slate-700 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                Editar
+                            </Button>
+                            {isAdmin && (
+                                <Button 
+                                    id="tour-client-delete" 
+                                    variant="outline" 
+                                    className={`bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500/20 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                                    icon={<Trash2 size={16} />} 
+                                    onClick={() => setIsDeleteClientModalOpen(true)}
+                                    disabled={isTourMode}
+                                >
+                                    Eliminar
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div id="tour-client-profile-actions" className="flex gap-2">
-                    <Button 
-                        id="tour-client-edit" 
-                        variant="outline" 
-                        icon={<Edit2 size={16} />} 
-                        onClick={() => setIsEditModalOpen(true)}
-                        disabled={isTourMode}
-                        className={isTourMode ? 'opacity-50 cursor-not-allowed' : ''}
-                    >
-                        Editar
-                    </Button>
-                    {isAdmin && (
+            ) : (
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-stagger" style={{ animationDelay: '100ms' }}>
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">{client.name}</h1>
+                        <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                            <span className="flex items-center gap-1"><Calendar size={16} /> Registrado: {client.dateAdded ? new Date(client.dateAdded).toLocaleDateString() : 'Sin fecha'}</span>
+                        </div>
+                    </div>
+                    <div id="tour-client-profile-actions" className="flex gap-2">
                         <Button 
-                            id="tour-client-delete" 
+                            id="tour-client-edit" 
                             variant="outline" 
-                            className={`text-red-500 hover:bg-red-50 hover:border-red-200 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`} 
-                            icon={<Trash2 size={16} />} 
-                            onClick={() => setIsDeleteClientModalOpen(true)}
+                            icon={<Edit2 size={16} />} 
+                            onClick={() => setIsEditModalOpen(true)}
                             disabled={isTourMode}
+                            className={isTourMode ? 'opacity-50 cursor-not-allowed' : ''}
                         >
-                            Eliminar
+                            Editar
                         </Button>
-                    )}
+                        {isAdmin && (
+                            <Button 
+                                id="tour-client-delete" 
+                                variant="outline" 
+                                className={`text-red-500 hover:bg-red-50 hover:border-red-200 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                                icon={<Trash2 size={16} />} 
+                                onClick={() => setIsDeleteClientModalOpen(true)}
+                                disabled={isTourMode}
+                            >
+                                Eliminar
+                            </Button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Custom Tabs */}
             <div className="flex space-x-1 bg-gray-100/50 p-1 rounded-xl w-fit animate-stagger" style={{ animationDelay: '200ms' }}>
@@ -3826,6 +4031,42 @@ const ClientProfileView = () => {
             <div className="mt-6">
                 {clientActiveTab === 'general' && (
                     <div className="space-y-6">
+                        {isBluenetClient(client) && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-stagger" style={{ animationDelay: '250ms' }}>
+                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center gap-3.5 border-l-4 border-l-amber-500">
+                                    <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
+                                        <Building2 size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Identificador Principal</div>
+                                        <div className="text-sm font-bold text-slate-900">Cliente Cero (#000)</div>
+                                        <div className="text-xs text-slate-500">Matriz Corporativa</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center gap-3.5 border-l-4 border-l-blue-600">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                                        <Briefcase size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Actividad Principal</div>
+                                        <div className="text-sm font-bold text-slate-900">Servicios de Fideicomiso</div>
+                                        <div className="text-xs text-slate-500">Custodia y Escrow</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center gap-3.5 border-l-4 border-l-emerald-600">
+                                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                                        <ShieldCheck size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Estatus Legal</div>
+                                        <div className="text-sm font-bold text-slate-900">Debida Diligencia Completada</div>
+                                        <div className="text-xs text-slate-500">Documentación al Día</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {/* Bloque 1: Tipo de Cliente e Información Principal */}
                         <Card id="tour-client-general-card" className="space-y-6 animate-stagger" style={{ animationDelay: '300ms' }}>
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-3 gap-2">
@@ -4203,7 +4444,7 @@ const ClientProfileView = () => {
                                                             if (prod) {
                                                                 const hasIva = prod.aplicaIva || Number(prod.ivaPercentage || prod.porcentaje_iva || 0) > 0;
                                                                 if (hasIva && (amt === Number(prod.price || prod.precio_base || 0))) {
-                                                                    const perc = Number(prod.ivaPercentage || prod.porcentaje_iva || 16);
+                                                                    const perc = Number(prod.ivaPercentage || prod.porcentaje_iva || 13);
                                                                     amt = amt + (amt * perc) / 100;
                                                                 }
                                                             }
@@ -4214,7 +4455,7 @@ const ClientProfileView = () => {
                                                             const hasIva = prod.aplicaIva || Number(prod.ivaPercentage || prod.porcentaje_iva || 0) > 0;
                                                             return hasIva ? (
                                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                                                                    IVA ({prod.ivaPercentage || prod.porcentaje_iva || 16}%)
+                                                                    IVA ({prod.ivaPercentage || prod.porcentaje_iva || 13}%)
                                                                 </span>
                                                             ) : null;
                                                         })()}
@@ -4668,7 +4909,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
         description: '',
         price: '',
         aplicaIva: false,
-        ivaPercentage: '16',
+        ivaPercentage: '13',
         status: 'Activo'
     });
 
@@ -4680,7 +4921,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                 description: initialData.description || '',
                 price: initialData.price !== undefined && initialData.price !== null ? String(initialData.price) : '',
                 aplicaIva: hasIva,
-                ivaPercentage: initialData.ivaPercentage !== undefined && initialData.ivaPercentage !== null ? String(initialData.ivaPercentage) : (initialData.porcentaje_iva !== undefined && initialData.porcentaje_iva !== null ? String(initialData.porcentaje_iva) : '16'),
+                ivaPercentage: initialData.ivaPercentage !== undefined && initialData.ivaPercentage !== null ? String(initialData.ivaPercentage) : (initialData.porcentaje_iva !== undefined && initialData.porcentaje_iva !== null ? String(initialData.porcentaje_iva) : '13'),
                 status: initialData.status || 'Activo'
             });
         } else {
@@ -4689,7 +4930,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                 description: '',
                 price: '',
                 aplicaIva: false,
-                ivaPercentage: '16',
+                ivaPercentage: '13',
                 status: 'Activo'
             });
         }
@@ -4743,6 +4984,39 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                 <form autoComplete="off" onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Servicio</label>
+                        
+                        {/* Opciones rápidas de servicios */}
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {[
+                                { label: 'Fideicomiso', desc: 'Constitución y administración de fideicomiso.' },
+                                { label: 'Depósito en custodia', desc: 'Custodia segura de valores y activos financieros.' },
+                                { label: 'Escrow', desc: 'Custodia transaccional y garantía de cumplimiento.' }
+                            ].map((opt) => (
+                                <button
+                                    key={opt.label}
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            name: opt.label,
+                                            description: prev.description === '' || [
+                                                'Constitución y administración de fideicomiso.',
+                                                'Custodia segura de valores y activos financieros.',
+                                                'Custodia transaccional y garantía de cumplimiento.'
+                                            ].includes(prev.description) ? opt.desc : prev.description
+                                        }));
+                                    }}
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-150 ${
+                                        formData.name.toLowerCase() === opt.label.toLowerCase()
+                                            ? 'bg-blue-100 text-blue-700 border-blue-300 shadow-sm'
+                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
                         <input
                             id="tour-product-name"
                             autoComplete="off"
@@ -4752,7 +5026,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                             disabled={isTourMode && currentTourStepId !== 'products-add-practice-name'}
                             onChange={e => setFormData({...formData, name: e.target.value})}
                             className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#488fcc] focus:border-transparent ${isTourMode && currentTourStepId !== 'products-add-practice-name' ? 'bg-gray-50' : 'bg-white'}`}
-                            placeholder="Ej. Contabilidad Mensual"
+                            placeholder="Escriba el nombre del servicio o elija uno arriba"
                         />
                     </div>
                     <div>
@@ -4770,7 +5044,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio Base ($)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Valor de los Activos ($)</label>
                         <input
                             id="tour-product-price"
                             autoComplete="off"
@@ -4786,7 +5060,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                         />
                     </div>
 
-                    {/* SECCIÓN IVA Y CÁLCULO AUTOMÁTICO DEL COSTO FINAL */}
+                    {/* SECCIÓN IVA Y CÁLCULO AUTOMÁTICO DE LA COMISIÓN */}
                     <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-3">
                         <div className="flex items-center justify-between">
                             <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-800">
@@ -4813,24 +5087,21 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                                     <input
                                         type="number"
                                         autoComplete="off"
-                                        min="0"
-                                        max="100"
-                                        step="any"
-                                        value={formData.ivaPercentage}
-                                        disabled={isTourMode}
-                                        onChange={e => setFormData({...formData, ivaPercentage: e.target.value})}
-                                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#488fcc] bg-white pr-8"
-                                        placeholder="16"
+                                        value="13"
+                                        disabled
+                                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-slate-50 text-slate-500 font-bold pr-8 cursor-not-allowed"
+                                        placeholder="13"
                                     />
                                     <span className="absolute right-3 top-2 text-xs font-bold text-gray-400">%</span>
                                 </div>
+                                <span className="text-[10px] text-gray-400 mt-1 block">El impuesto al valor agregado (IVA) está fijado al 13%.</span>
                             </div>
                         )}
 
                         {/* RESUMEN CÁLCULO AUTOMÁTICO */}
                         <div className="pt-2 border-t border-slate-200/80 text-xs space-y-1.5">
                             <div className="flex justify-between text-gray-600">
-                                <span>Precio Base:</span>
+                                <span>Valor de los Activos:</span>
                                 <span className="font-semibold text-gray-800">${basePrice.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             {formData.aplicaIva && (
@@ -4840,7 +5111,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                                 </div>
                             )}
                             <div className="flex justify-between text-sm font-bold text-gray-900 pt-1.5 border-t border-slate-200">
-                                <span>Costo Final del Servicio:</span>
+                                <span>Comisión:</span>
                                 <span className="text-[#203e71]">${costoFinal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
@@ -4918,13 +5189,13 @@ const ProductsView = () => {
     const columns = [
         { header: 'Nombre del Servicio', accessor: 'name', render: (r: any) => <span className="font-medium text-gray-900">{r.name}</span> },
         { header: 'Descripción', accessor: 'description', render: (r: any) => <span className="text-gray-500">{r.description}</span> },
-        { header: 'Precio Base', accessor: 'price', render: (r: any) => `$${Number(r.price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+        { header: 'Valor de los Activos', accessor: 'price', render: (r: any) => `$${Number(r.price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
         { 
             header: 'IVA', 
             accessor: 'iva', 
             render: (r: any) => {
                 const hasIva = r.aplicaIva || Number(r.ivaPercentage || r.porcentaje_iva || 0) > 0;
-                const perc = r.ivaPercentage || r.porcentaje_iva || 16;
+                const perc = r.ivaPercentage || r.porcentaje_iva || 13;
                 return hasIva ? (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                         {perc}% IVA
@@ -4935,12 +5206,12 @@ const ProductsView = () => {
             } 
         },
         { 
-            header: 'Costo Final', 
+            header: 'Comisión', 
             accessor: 'costoFinal', 
             render: (r: any) => {
                 const base = Number(r.price || 0);
                 const hasIva = r.aplicaIva || Number(r.ivaPercentage || r.porcentaje_iva || 0) > 0;
-                const perc = hasIva ? Number(r.ivaPercentage || r.porcentaje_iva || 16) : 0;
+                const perc = hasIva ? Number(r.ivaPercentage || r.porcentaje_iva || 13) : 0;
                 const total = r.costoFinal !== undefined && r.costoFinal !== null ? Number(r.costoFinal) : (base + (base * perc) / 100);
                 return <span className="font-bold text-slate-900">${total.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>;
             } 

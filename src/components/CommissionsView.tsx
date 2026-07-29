@@ -346,7 +346,7 @@ export const CommissionsView: React.FC<CommissionsViewProps> = ({
                                                             {c.porcentaje}% de ${Number(c.montoAdministrado || c.monto_administrado || 0).toLocaleString('es-MX')}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-slate-400">Monto fijo</span>
+                                                        <span className="text-slate-400">Comisión fija</span>
                                                     )}
                                                 </div>
                                             </td>
