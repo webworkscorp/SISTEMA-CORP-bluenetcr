@@ -958,6 +958,9 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     montoFijo: parseFloat(c.monto_fijo || 0),
                     porcentaje: parseFloat(c.porcentaje || 0),
                     montoAdministrado: parseFloat(c.monto_administrado || 0),
+                    subtotal: parseFloat(c.subtotal ?? (c.monto_calculado || 0)),
+                    incluyeIva: Boolean(c.incluye_iva ?? false),
+                    montoIva: parseFloat(c.monto_iva || 0),
                     montoCalculado: parseFloat(c.monto_calculado || 0),
                     frecuencia: c.frecuencia || 'una_vez',
                     estado: c.estado || 'pendiente',
@@ -1693,9 +1696,14 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     // --- COMMISSION HELPER FUNCTIONS ---
     const addCommission = async (item: any) => {
-        const montoCalculado = item.tipoCalculo === 'fija'
-            ? Number(item.montoFijo || 0)
-            : ((Number(item.porcentaje || 0) / 100) * Number(item.montoAdministrado || 0));
+        const subtotal = item.subtotal ?? (
+            item.tipoCalculo === 'fija'
+                ? Number(item.montoFijo || 0)
+                : ((Number(item.porcentaje || 0) / 100) * Number(item.montoAdministrado || 0))
+        );
+        const incluyeIva = Boolean(item.incluyeIva);
+        const montoIva = item.montoIva ?? (incluyeIva ? subtotal * 0.13 : 0);
+        const montoCalculado = item.montoCalculado ?? (subtotal + montoIva);
 
         let validClientId = item.clienteId;
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(validClientId || '');
@@ -1718,6 +1726,9 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
             monto_fijo: item.tipoCalculo === 'fija' ? Number(item.montoFijo || 0) : null,
             porcentaje: item.tipoCalculo === 'porcentual' ? Number(item.porcentaje || 0) : null,
             monto_administrado: item.tipoCalculo === 'porcentual' ? Number(item.montoAdministrado || 0) : null,
+            subtotal: subtotal,
+            incluye_iva: incluyeIva,
+            monto_iva: montoIva,
             monto_calculado: montoCalculado,
             frecuencia: item.frecuencia || 'una_vez',
             estado: item.estado || 'pendiente'
@@ -1757,7 +1768,10 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 montoFijo: parseFloat(inserted.monto_fijo || 0),
                 porcentaje: parseFloat(inserted.porcentaje || 0),
                 montoAdministrado: parseFloat(inserted.monto_administrado || 0),
-                montoCalculado: parseFloat(inserted.monto_calculado || 0),
+                subtotal: parseFloat(inserted.subtotal ?? subtotal),
+                incluyeIva: Boolean(inserted.incluye_iva ?? incluyeIva),
+                montoIva: parseFloat(inserted.monto_iva ?? montoIva),
+                montoCalculado: parseFloat(inserted.monto_calculado ?? montoCalculado),
                 frecuencia: inserted.frecuencia,
                 estado: inserted.estado,
                 fechaCreacion: inserted.fecha_creacion
@@ -1819,9 +1833,14 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const updateCommission = async (id: string, item: any) => {
-        const montoCalculado = item.tipoCalculo === 'fija'
-            ? Number(item.montoFijo || 0)
-            : ((Number(item.porcentaje || 0) / 100) * Number(item.montoAdministrado || 0));
+        const subtotal = item.subtotal ?? (
+            item.tipoCalculo === 'fija'
+                ? Number(item.montoFijo || 0)
+                : ((Number(item.porcentaje || 0) / 100) * Number(item.montoAdministrado || 0))
+        );
+        const incluyeIva = Boolean(item.incluyeIva);
+        const montoIva = item.montoIva ?? (incluyeIva ? subtotal * 0.13 : 0);
+        const montoCalculado = item.montoCalculado ?? (subtotal + montoIva);
 
         const payload = {
             cliente_id: item.clienteId,
@@ -1830,6 +1849,9 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
             monto_fijo: item.tipoCalculo === 'fija' ? Number(item.montoFijo || 0) : null,
             porcentaje: item.tipoCalculo === 'porcentual' ? Number(item.porcentaje || 0) : null,
             monto_administrado: item.tipoCalculo === 'porcentual' ? Number(item.montoAdministrado || 0) : null,
+            subtotal: subtotal,
+            incluye_iva: incluyeIva,
+            monto_iva: montoIva,
             monto_calculado: montoCalculado,
             frecuencia: item.frecuencia || 'una_vez',
             estado: item.estado || 'pendiente'
@@ -1856,6 +1878,9 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
             montoFijo: Number(item.montoFijo || 0),
             porcentaje: Number(item.porcentaje || 0),
             montoAdministrado: Number(item.montoAdministrado || 0),
+            subtotal: subtotal,
+            incluyeIva: incluyeIva,
+            montoIva: montoIva,
             montoCalculado: montoCalculado,
             frecuencia: item.frecuencia,
             estado: item.estado
@@ -2866,7 +2891,7 @@ const TaskFormModal = ({ isOpen, onClose, onSubmit, clientId = '', initialData =
                                         <option value="">Seleccione un cliente</option>
                                         {clients.map((c: any) => (
                                             <option key={c.id} value={c.id}>
-                                                {isBluenetClient(c) ? `⭐ ${c.name} (VIP #000)` : c.name}
+                                                {isBluenetClient(c) ? `${c.name} (Cuenta Matriz #000)` : c.name}
                                             </option>
                                         ))}
                                     </select>
@@ -3221,7 +3246,7 @@ const DashboardView = () => {
     return (
         <div className="space-y-6">
             <SectionTitle 
-                title="Dashboard" 
+                title="Menú" 
                 subtitle={new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} 
                 className="animate-stagger" style={{ animationDelay: '0ms' }}
             />
@@ -3480,13 +3505,15 @@ const DashboardView = () => {
                                                 <td className="px-4 py-3">
                                                     <div className="font-medium text-gray-900 flex items-center gap-2">
                                                         {isBluenetClient(client) ? (
-                                                            <>
-                                                                <img src="https://i.imgur.com/4Wc522w.png" alt="BLUENET" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-6 h-6 rounded-md bg-[#203e71]/10 border border-[#203e71]/20 flex items-center justify-center shrink-0">
+                                                                    <Building2 size={13} className="text-[#203e71]" />
+                                                                </div>
                                                                 <span className="font-bold text-slate-900">{client.name}</span>
-                                                                <span className="bg-slate-900 text-amber-300 font-semibold text-[10px] px-2 py-0.5 rounded-full border border-amber-400/40">
-                                                                    VIP #000
+                                                                <span className="bg-slate-100 text-[#203e71] border border-slate-200/80 font-semibold text-[10px] px-2 py-0.5 rounded-full">
+                                                                    Matriz #000
                                                                 </span>
-                                                            </>
+                                                            </div>
                                                         ) : (
                                                             client.name
                                                         )}
@@ -3632,18 +3659,18 @@ const ClientsListView = () => {
                                     <div 
                                         key={client.id} 
                                         onClick={() => !isTourMode && navigateTo('clientProfile', client.id)}
-                                        className={`bg-slate-900 text-white rounded-2xl p-6 border border-slate-800 hover:border-amber-400/60 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden group animate-stagger ${isTourMode ? 'opacity-75 grayscale-[0.2]' : ''}`}
+                                        className={`bg-white text-slate-900 rounded-2xl p-6 border-2 border-[#203e71]/30 hover:border-[#203e71] shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer relative overflow-hidden group animate-stagger ${isTourMode ? 'opacity-75 grayscale-[0.2]' : ''}`}
                                         style={{ animationDelay: `${100 + i * 50}ms` }}
                                     >
-                                        {/* Top subtle gradient bar */}
-                                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#203e71] via-[#488fcc] to-amber-400" />
+                                        {/* Top subtle corporate gradient bar */}
+                                        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#203e71] via-[#488fcc] to-[#203e71]" />
                                         
                                         <div className="flex justify-between items-start mb-4">
-                                            <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700/80 p-2 flex items-center justify-center shrink-0">
-                                                <img src="https://i.imgur.com/4Wc522w.png" alt="BLUENET" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                                            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 p-2.5 flex items-center justify-center shrink-0 shadow-2xs group-hover:bg-[#203e71]/5 transition-colors">
+                                                <Building2 size={24} className="text-[#203e71]" />
                                             </div>
                                             <div className="flex flex-col items-end gap-1">
-                                                <span className="bg-amber-400/10 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                                <span className="bg-[#203e71]/10 text-[#203e71] border border-[#203e71]/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                                                     Cuenta Corporativa #000
                                                 </span>
                                                 <Badge type="success">Activo</Badge>
@@ -3651,27 +3678,27 @@ const ClientsListView = () => {
                                         </div>
 
                                         <div className="mb-4">
-                                            <h3 className="text-xl font-bold text-white flex items-center gap-2 group-hover:text-amber-300 transition-colors">
+                                            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2 group-hover:text-[#203e71] transition-colors">
                                                 {client.name}
-                                                <ShieldCheck size={18} className="text-amber-400" />
+                                                <ShieldCheck size={18} className="text-[#203e71]" />
                                             </h3>
-                                            <p className="text-xs text-slate-300 font-medium">
+                                            <p className="text-xs text-slate-500 font-medium">
                                                 {client.company || 'BLUENET Trust & Escrow'} • Matriz Principal
                                             </p>
                                         </div>
 
-                                        <div className="space-y-2 text-xs text-slate-300 border-t border-slate-800 pt-3 mb-4">
+                                        <div className="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3 mb-4">
                                             <div className="flex items-center gap-2">
-                                                <Mail size={13} className="text-amber-400" /> {client.email}
+                                                <Mail size={13} className="text-slate-400" /> {client.email}
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Phone size={13} className="text-amber-400" /> {client.phone || '+506 4000-0000'}
+                                                <Phone size={13} className="text-slate-400" /> {client.phone || '+506 4000-0000'}
                                             </div>
                                         </div>
 
-                                        <div className="bg-slate-800/90 hover:bg-slate-800 text-amber-300 font-semibold rounded-xl py-2.5 px-4 flex items-center justify-between text-xs border border-slate-700 transition-all">
+                                        <div className="bg-slate-50 hover:bg-slate-100/80 text-[#203e71] font-semibold rounded-xl py-2.5 px-4 flex items-center justify-between text-xs border border-slate-200/80 transition-all">
                                             <span className="flex items-center gap-2">
-                                                <Building2 size={14} className="text-amber-400" /> Ver Expediente Corporativo
+                                                <Building2 size={14} className="text-[#203e71]" /> Ver Expediente Corporativo
                                             </span>
                                             <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                         </div>
@@ -3902,31 +3929,31 @@ const ClientProfileView = () => {
             </div>
 
             {isBluenetClient(client) ? (
-                /* Executive Corporate Premium Header for Bluenet */
-                <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 rounded-2xl border border-slate-800 shadow-xl p-6 md:p-8 text-white mb-6 relative overflow-hidden animate-stagger" style={{ animationDelay: '100ms' }}>
-                    {/* Subtle top gold accent bar */}
-                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#203e71] via-[#488fcc] to-amber-400" />
+                /* Executive Corporate Studio Header for Bluenet */
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-6 md:p-8 text-slate-900 mb-6 relative overflow-hidden animate-stagger" style={{ animationDelay: '100ms' }}>
+                    {/* Top corporate accent bar */}
+                    <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#203e71] via-[#488fcc] to-[#203e71]" />
 
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-800/90 border border-slate-700/80 p-3 shadow-inner flex items-center justify-center shrink-0">
-                                <img src="https://i.imgur.com/4Wc522w.png" alt="BLUENET" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 shadow-2xs flex items-center justify-center shrink-0">
+                                <Building2 size={36} className="text-[#203e71]" />
                             </div>
 
                             <div className="space-y-1.5">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="bg-amber-400/10 text-amber-300 border border-amber-400/30 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                                    <span className="bg-[#203e71]/10 text-[#203e71] border border-[#203e71]/20 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
                                         <Building2 size={13} /> Cuenta Corporativa #000
                                     </span>
-                                    <span className="bg-blue-500/10 text-blue-300 border border-blue-400/30 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
+                                    <span className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
                                         <ShieldCheck size={13} /> Matriz Principal - Fideicomiso & Escrow
                                     </span>
                                 </div>
 
-                                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
                                     {client.name}
                                 </h1>
-                                <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                                <p className="text-xs sm:text-sm text-slate-500 font-medium">
                                     {client.company || 'BLUENET Trust & Escrow'} • Registro de Operaciones y Custodia
                                 </p>
                             </div>
@@ -3939,7 +3966,7 @@ const ClientProfileView = () => {
                                 icon={<Edit2 size={16} />} 
                                 onClick={() => setIsEditModalOpen(true)}
                                 disabled={isTourMode}
-                                className={`bg-slate-800 hover:bg-slate-700 text-white border-slate-700 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`bg-white hover:bg-slate-50 text-slate-700 border-slate-300 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 Editar
                             </Button>
@@ -3947,7 +3974,7 @@ const ClientProfileView = () => {
                                 <Button 
                                     id="tour-client-delete" 
                                     variant="outline" 
-                                    className={`bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500/20 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                                    className={`bg-red-50 text-red-600 border-red-200 hover:bg-red-100 ${isTourMode ? 'opacity-50 cursor-not-allowed' : ''}`} 
                                     icon={<Trash2 size={16} />} 
                                     onClick={() => setIsDeleteClientModalOpen(true)}
                                     disabled={isTourMode}
@@ -4033,8 +4060,8 @@ const ClientProfileView = () => {
                     <div className="space-y-6">
                         {isBluenetClient(client) && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-stagger" style={{ animationDelay: '250ms' }}>
-                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center gap-3.5 border-l-4 border-l-amber-500">
-                                    <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
+                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center gap-3.5 border-l-4 border-l-[#203e71]">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-[#203e71] flex items-center justify-center font-bold shrink-0">
                                         <Building2 size={20} />
                                     </div>
                                     <div>
@@ -4044,8 +4071,8 @@ const ClientProfileView = () => {
                                     </div>
                                 </div>
 
-                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center gap-3.5 border-l-4 border-l-blue-600">
-                                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center gap-3.5 border-l-4 border-l-[#488fcc]">
+                                    <div className="w-10 h-10 rounded-lg bg-sky-50 text-[#488fcc] flex items-center justify-center font-bold shrink-0">
                                         <Briefcase size={20} />
                                     </div>
                                     <div>
@@ -4055,7 +4082,7 @@ const ClientProfileView = () => {
                                     </div>
                                 </div>
 
-                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center gap-3.5 border-l-4 border-l-emerald-600">
+                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center gap-3.5 border-l-4 border-l-emerald-600">
                                     <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
                                         <ShieldCheck size={20} />
                                     </div>
@@ -5111,7 +5138,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, initialData = null }: any
                                 </div>
                             )}
                             <div className="flex justify-between text-sm font-bold text-gray-900 pt-1.5 border-t border-slate-200">
-                                <span>Comisión:</span>
+                                <span>Comisión de Administración:</span>
                                 <span className="text-[#203e71]">${costoFinal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
@@ -5206,7 +5233,7 @@ const ProductsView = () => {
             } 
         },
         { 
-            header: 'Comisión', 
+            header: 'Comisión de Administración', 
             accessor: 'costoFinal', 
             render: (r: any) => {
                 const base = Number(r.price || 0);
@@ -7676,7 +7703,7 @@ const AppLayout = () => {
     }
 
     const navItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
+        { id: 'dashboard', label: 'Menú', icon: <LayoutDashboard /> },
         { id: 'clients', label: 'Clientes', icon: <Users /> },
         { id: 'tasks_global', label: 'Tareas', icon: <CheckSquare /> },
         { id: 'products', label: 'Servicios', icon: <Package /> },

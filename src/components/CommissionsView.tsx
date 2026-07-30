@@ -302,6 +302,10 @@ export const CommissionsView: React.FC<CommissionsViewProps> = ({
                                     const clientObj = clients.find((cl: any) => cl.id === c.clienteId);
                                     const clientName = clientObj?.name || c.clienteNombre || 'Cliente no asignado';
                                     const isPending = c.estado === 'pendiente';
+                                    const hasIva = Boolean(c.incluyeIva || c.incluye_iva);
+                                    const totalCalc = Number(c.montoCalculado || c.monto_calculado || 0);
+                                    const subtotalVal = Number(c.subtotal ?? (hasIva ? totalCalc / 1.13 : totalCalc));
+                                    const ivaVal = Number(c.montoIva ?? c.monto_iva ?? (hasIva ? totalCalc - subtotalVal : 0));
 
                                     return (
                                         <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
@@ -337,16 +341,26 @@ export const CommissionsView: React.FC<CommissionsViewProps> = ({
 
                                             {/* Monto */}
                                             <td className="py-4 px-5">
-                                                <div className="font-bold text-slate-900 text-sm">
-                                                    ${Number(c.montoCalculado || c.monto_calculado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                                                    ${totalCalc.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {hasIva && (
+                                                        <span className="px-1.5 py-0.5 text-[9px] font-black bg-blue-100 text-blue-800 rounded border border-blue-200" title="Incluye 13% de IVA">
+                                                            13% IVA
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <div className="text-[11px] text-slate-500 font-medium">
+                                                <div className="text-[11px] text-slate-500 font-medium space-y-0.5">
                                                     {c.tipoCalculo === 'porcentual' || c.tipo_calculo === 'porcentual' ? (
-                                                        <span className="text-blue-600 font-semibold">
+                                                        <span className="text-blue-600 font-semibold block">
                                                             {c.porcentaje}% de ${Number(c.montoAdministrado || c.monto_administrado || 0).toLocaleString('es-MX')}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-slate-400">Comisión fija</span>
+                                                        <span className="text-slate-400 block">Comisión fija</span>
+                                                    )}
+                                                    {hasIva && (
+                                                        <span className="text-[10px] text-slate-500 block font-normal">
+                                                            Base: ${subtotalVal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + IVA (${ivaVal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                                                        </span>
                                                     )}
                                                 </div>
                                             </td>

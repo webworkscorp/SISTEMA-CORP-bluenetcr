@@ -31,6 +31,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
     const [montoAdministrado, setMontoAdministrado] = useState<string | number>('');
     const [frecuencia, setFrecuencia] = useState<'una_vez' | 'mensual' | 'trimestral' | 'anual'>('una_vez');
     const [estado, setEstado] = useState<'pendiente' | 'pagada'>('pendiente');
+    const [incluyeIva, setIncluyeIva] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -45,6 +46,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                 setMontoAdministrado(initialData.montoAdministrado ?? initialData.monto_administrado ?? '');
                 setFrecuencia(initialData.frecuencia || 'una_vez');
                 setEstado(initialData.estado || 'pendiente');
+                setIncluyeIva(Boolean(initialData.incluyeIva ?? initialData.incluye_iva ?? false));
             } else {
                 setClienteId(clients.length > 0 ? clients[0].id : '');
                 setConcepto('');
@@ -54,6 +56,7 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                 setMontoAdministrado('');
                 setFrecuencia('una_vez');
                 setEstado('pendiente');
+                setIncluyeIva(false);
             }
             setErrorMsg(null);
             setIsSubmitting(false);
@@ -66,9 +69,11 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
     const calcFixed = Number(montoFijo) || 0;
     const calcPct = Number(porcentaje) || 0;
     const calcAdmin = Number(montoAdministrado) || 0;
-    const montoCalculadoRealTime = tipoCalculo === 'fija' 
+    const subtotalRealTime = tipoCalculo === 'fija' 
         ? calcFixed 
         : (calcPct / 100) * calcAdmin;
+    const montoIvaRealTime = incluyeIva ? subtotalRealTime * 0.13 : 0;
+    const montoCalculadoRealTime = subtotalRealTime + montoIvaRealTime;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -110,6 +115,9 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                 montoFijo: tipoCalculo === 'fija' ? calcFixed : 0,
                 porcentaje: tipoCalculo === 'porcentual' ? calcPct : 0,
                 montoAdministrado: tipoCalculo === 'porcentual' ? calcAdmin : 0,
+                subtotal: subtotalRealTime,
+                incluyeIva,
+                montoIva: montoIvaRealTime,
                 montoCalculado: montoCalculadoRealTime,
                 frecuencia,
                 estado
@@ -303,18 +311,63 @@ export const CommissionFormModal: React.FC<CommissionFormModalProps> = ({
                         </div>
                     )}
 
-                    {/* REAL-TIME PREVIEW CARD */}
-                    <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-blue-50/90 border border-blue-200/70 shadow-2xs">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider block">
-                                    Monto resultante a cobrar
+                    {/* Opción IVA 13% */}
+                    <div className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/80 flex items-center justify-between">
+                        <div className="space-y-0.5 pr-2">
+                            <label htmlFor="incluyeIvaToggle" className="text-xs font-bold text-slate-800 flex items-center gap-1.5 cursor-pointer">
+                                <span>Aplicar IVA (13%)</span>
+                                <span className="text-[10px] bg-blue-100 text-blue-700 font-extrabold px-2 py-0.5 rounded-md border border-blue-200">
+                                    +13% IVA
                                 </span>
-                                <p className="text-xs text-slate-600 mt-0.5">
+                            </label>
+                            <p className="text-[11px] text-slate-500">
+                                Calcula e incluye el 13% de Impuesto al Valor Agregado sobre el subtotal de la comisión.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            id="incluyeIvaToggle"
+                            onClick={() => setIncluyeIva(!incluyeIva)}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                incluyeIva ? 'bg-blue-600' : 'bg-slate-300'
+                            }`}
+                        >
+                            <span
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                    incluyeIva ? 'translate-x-5' : 'translate-x-0'
+                                }`}
+                            />
+                        </button>
+                    </div>
+
+                    {/* REAL-TIME PREVIEW CARD */}
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-blue-50/90 border border-blue-200/70 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between text-xs text-slate-600">
+                            <span>Subtotal Base:</span>
+                            <span className="font-bold text-slate-800">
+                                ${subtotalRealTime.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                        {incluyeIva && (
+                            <div className="flex items-center justify-between text-xs text-blue-700 font-medium">
+                                <span className="flex items-center gap-1">
+                                    IVA (13%):
+                                </span>
+                                <span className="font-bold">
+                                    +${montoIvaRealTime.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        )}
+                        <div className="pt-2 border-t border-blue-200/60 flex items-center justify-between">
+                            <div>
+                                <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider block">
+                                    Monto total a cobrar
+                                </span>
+                                <p className="text-[11px] text-slate-500">
                                     {tipoCalculo === 'fija' 
-                                        ? 'Cálculo por comisión fija directa' 
+                                        ? 'Comisión fija' 
                                         : `${calcPct}% de $${calcAdmin.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    }
+                                    } {incluyeIva ? '(incluye 13% IVA)' : '(sin IVA)'}
                                 </p>
                             </div>
                             <div className="text-right">
